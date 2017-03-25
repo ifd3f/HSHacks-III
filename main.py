@@ -70,15 +70,13 @@ class GameRoom:
 	def createPlayer(self, socket_sid):
 		body = pymunk.Body(PLAYER_MASS, 1666)
 		print(offsetBox(0, 60, 60, 30))
-		front_physical = pymunk.Poly.create_box(body, offsetBox(0, 60, 60, 30), radius=1.0)
+		front_physical = pymunk.Poly(body, offsetBox(0, 60, 60, 30), radius=1.0)
 		front_physical.elasticity = 1.5
-		back_physical = pymunk.Poly.create_box(body, offsetBox(0, 0, 60, 90), radius=1.0)
+		back_physical = pymunk.Poly(body, offsetBox(0, 0, 60, 90), radius=1.0)
 		back_physical.elasticity = 3.0
-		back_sensor = pymunk.Poly.create_box(body, offsetBox(0, 0, 70, 100), radius=1.0) 
+		back_sensor = pymunk.Poly(body, offsetBox(0, 0, 70, 100), radius=1.0) 
 		back_sensor.contact = True
-		space.add(body, front_physical)
-		space.add(body, back_physical)
-		space.add(body, back_sensor)
+		self.space.add(body, front_physical, back_physical, back_sensor)
 		self.players.append(Player(socket_sid, self, body))
 
 
@@ -95,6 +93,10 @@ def offsetBox(cx, cy, length, width):
 @app.route('/')
 def index():
 	return render_template('index.html')
+
+@app.route('/game')
+def game():
+	return render_template('game.html')
 
 socketio = SocketIO(app)
 
