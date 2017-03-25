@@ -108,4 +108,4 @@ def on_connect():
 
 if __name__ == '__main__':
 	room = GameRoom([])
-	socketio.run(app)
+	socketio.run(app, host='0.0.0.0')
