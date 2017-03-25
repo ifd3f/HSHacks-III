@@ -105,8 +105,8 @@
 			}
 
 			$(document).mousemove(function(event) {
-				var relativeX = event.pageX - playerX;
-				var relativeY = event.pageY - playerY;
+				var relativeX = event.pageX - canvas.width/2;
+				var relativeY = event.pageY - canvas.height/2;
 
 				var angle = Math.atan2(relativeY, relativeX);
 				socket.emit("direction", {angle: angle});
@@ -115,21 +115,21 @@
 			$(document).mousedown(function(event) {
     			switch (event.which) {
 					case 1:
-						socket.emit("leftMouseDown");
+						socket.emit("boost", {boost: true});
 						break;
 					case 3:
-						alert("rightMouseDown");
+						socket.emit("brake", {brake: true});
 						break;
 				}
 			});
 
-			$(document).mousedown(function(event) {
+			$(document).mouseup(function(event) {
     			switch (event.which) {
 					case 1:
-						socket.emit("leftMouseUp");
+						socket.emit("boost", {boost: false});
 						break;
 					case 3:
-						alert("rightMouseUp");
+						socket.emit("brake", {brake: false});
 						break;
 				}
 			});

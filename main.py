@@ -1,3 +1,7 @@
+import math
+import threading
+import time
+
 from flask import Flask, render_template, request
 from flask_socketio import SocketIO
 
@@ -60,6 +64,7 @@ class GameRoom:
 	
 	def update(self, dt):
 		self.space.step(dt)
+		#socketio.emit
 
 	def getEncodedPositions(self, dt):
 		return {
@@ -67,14 +72,20 @@ class GameRoom:
 			for player in self.players
 		}
 
+	def player_by_sid(self, sid):
+		for p in self.players:
+			if p.socket_id == sid:
+				return sid
+		return None
+
 	def createPlayer(self, socket_sid):
 		body = pymunk.Body(PLAYER_MASS, 1666)
 		print(offsetBox(0, 60, 60, 30))
-		front_physical = pymunk.Poly(body, offsetBox(0, 60, 60, 30), radius=1.0)
+		front_physical = pymunk.Poly(body, offsetBox(0, 60, 60, 30), radius=5.0)
 		front_physical.elasticity = 1.5
-		back_physical = pymunk.Poly(body, offsetBox(0, 0, 60, 90), radius=1.0)
+		back_physical = pymunk.Poly(body, offsetBox(0, 0, 60, 90), radius=5.0)
 		back_physical.elasticity = 3.0
-		back_sensor = pymunk.Poly(body, offsetBox(0, 0, 70, 100), radius=1.0) 
+		back_sensor = pymunk.Poly(body, offsetBox(0, 0, 70, 100), radius=5.0) 
 		back_sensor.contact = True
 		self.space.add(body, front_physical, back_physical, back_sensor)
 		self.players.append(Player(socket_sid, self, body))
@@ -105,7 +116,28 @@ def on_connect():
 	currentSocketId = request.sid
 	room.createPlayer(currentSocketId)
 
+@socketio.on('direction')
+def on_direction(data):
+	pass
+
+@socketio.on('boost')
+def on_boost(data):
+	pass
+
+@socketio.on('brake')
+def on_boost(data):
+	pass
+
 
 if __name__ == '__main__':
 	room = GameRoom([])
-	socketio.run(app, host='0.0.0.0')
+	def game_update_loop():
+		while True:
+			room.update(0.02)
+			time.sleep(0.02)
+	game_updater = threading.Thread(target=game_update_loop)
+	web_server = threading.Thread(target=lambda: socketio.run(app, host='0.0.0.0'))
+	game_updater.start()
+	web_server.start()
+	web_server.join()
+	
