@@ -12,12 +12,18 @@
 			  height: 100%;
 			  margin: 0px;
 			}
+
+			#boostCanvas {
+				position: fixed;
+				bottom: 10px;
+				left: 10px;
+			}
 		</style>
 
 	</head>
 	<body>
 		<canvas id="myCanvas"></canvas>
-		<canvas id="boostCanvas"></canvas>
+		<canvas id="boostCanvas" width="50" height="200"></canvas>
 
 		<script type="text/javascript">	
 			var playerR = 30;
@@ -28,7 +34,8 @@
 			var playerY = 100;
 			var playerRot = 0;
 			var color = "green";
-			var boost = 2;
+			var maxBoost = 2;
+			var boost = maxBoost;
 			var isBoosting = false;
 
 			var canvas = document.getElementById("myCanvas");
@@ -81,6 +88,20 @@
 				ctx.fill();
 
 				ctx.restore();
+			}
+
+			function drawBoostLevel() {
+				var borderWidth = 7;
+
+				boostCtx.fillStyle = "gray";
+				boostCtx.fillRect(0,0,boostCtx.canvas.width,boostCtx.canvas.height);
+
+				var maxBoostHeight = boostCtx.canvas.height - borderWidth*2;
+				var boostWidth = boostCtx.canvas.width - borderWidth*2;
+				var boostHeight = boost/maxBoost * maxBoostHeight;
+
+				boostCtx.fillStyle = "yellow";
+				boostCtx.fillRect(borderWidth, borderWidth + (maxBoostHeight - boostHeight), boostWidth, boostHeight);
 			}
 
 			$(document).mousemove(function(event) {
@@ -162,7 +183,8 @@
 				canvas.height = window.innerHeight-4;
 
 				drawCharacter(0, 0, playerRot, "black"); //yourself
-				if (true) {
+				drawBoostLevel();
+				if (isBoosting) {
 					drawBoost(0, 0, playerRot);
 				}
 			}
