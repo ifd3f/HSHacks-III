@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Beeg Truck</title>
+
+		<script type="text/javascript" src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.7.3/socket.io.min.js"></script>
+
+		<style type="text/css">
+			html, body {
+			  width:  100%;
+			  height: 100%;
+			  margin: 0px;
+			}
+
+			#boostCanvas {
+				position: fixed;
+				bottom: 10px;
+				left: 10px;
+			}
+		</style>
+
+	</head>
+	<body oncontextmenu="return false;">
+		<canvas id="myCanvas"></canvas>
+		<canvas id="boostCanvas" width="50" height="200"></canvas>
+
+		<script type="text/javascript">	
+			var playerR = 30;
+			var playerHeight = 90;
+			var socket = io();
+
+			var playerX = 100;
+			var playerY = 100;
+			var playerRot = 0;
+			var color = "green";
+			var maxBoost = 2;
+			var boost = maxBoost;
+			var isBoosting = false;
+
+			var canvas = document.getElementById("myCanvas");
+			var ctx = canvas.getContext('2d');
+
+			var boostCtx = document.getElementById("boostCanvas").getContext('2d');
+
+			function drawCharacter(centerX, centerY, angle, color) {
+				centerX += canvas.width/2;
+				centerY += canvas.height/2;
+
+				ctx.save();
+
+				ctx.translate(centerX, centerY);
+				ctx.rotate( angle*Math.PI/180 ); 
+				ctx.translate(-centerX, -centerY);
+
+				ctx.beginPath();
+				ctx.arc(centerX, centerY, playerR, 0, Math.PI, true);
+				ctx.lineTo(centerX - playerR, centerY + playerHeight);
+				ctx.lineTo(centerX + playerR, centerY + playerHeight);
+				ctx.closePath();
+
+				ctx.fillStyle = color;
+				ctx.fill();
+
+				ctx.restore();
+			}
+
+			function drawBoost(playerX, playerY, playerRot) {
+				playerX += canvas.width/2;
+				playerY += canvas.height/2;
+
+				boostWidth = 25;
+				boostHeight = 50;
+
+				ctx.save();
+
+				ctx.translate(playerX, playerY);
+				ctx.rotate( playerRot*Math.PI/180 ); 
+				ctx.translate(-playerX, -playerY);
+
+				ctx.beginPath();
+				ctx.moveTo(playerX - boostWidth/2, playerY + playerHeight);
+				ctx.lineTo(playerX, playerY + playerHeight + boostHeight);
+				ctx.lineTo(playerX + boostWidth/2, playerY + playerHeight);
+				ctx.closePath();
+
+				ctx.fillStyle = "yellow";
+				ctx.fill();
+
+				ctx.restore();
+			}
+
+			function drawBoostLevel() {
+				var borderWidth = 7;
+
+				boostCtx.fillStyle = "gray";
+				boostCtx.fillRect(0,0,boostCtx.canvas.width,boostCtx.canvas.height);
+
+				var maxBoostHeight = boostCtx.canvas.height - borderWidth*2;
+				var boostWidth = boostCtx.canvas.width - borderWidth*2;
+				var boostHeight = boost/maxBoost * maxBoostHeight;
+
+				boostCtx.fillStyle = "yellow";
+				boostCtx.fillRect(borderWidth, borderWidth + (maxBoostHeight - boostHeight), boostWidth, boostHeight);
+			}
+
+			$(document).mousemove(function(event) {
+				var relativeX = event.pageX - playerX;
+				var relativeY = event.pageY - playerY;
+
+				var angle = Math.atan2(relativeY, relativeX);
+				socket.emit("direction", {angle: angle});
+			})
+
+			$(document).mousedown(function(event) {
+    			switch (event.which) {
+					case 1:
+						socket.emit("leftMouseDown");
+						break;
+					case 3:
+						alert("rightMouseDown");
+						break;
+				}
+			});
+
+			$(document).mousedown(function(event) {
+    			switch (event.which) {
+					case 1:
+						socket.emit("leftMouseUp");
+						break;
+					case 3:
+						alert("rightMouseUp");
+						break;
+				}
+			});
+
+			function adjustedOpponent(x, y) { //returns null if outside of frame
+				var player = {x:x - playerX, y:y - playerY};
+
+				var maxX = canvas.width/2 + playerR;
+				var minX = -canvas.width/2 - playerR;
+				var maxY = canvas.height/2 + playerHeight;
+				var minY = -canvas.height/2 - playerR;
+
+				if (player.x > maxX || player.x < minX || player.y > maxY || player.y < minY) {
+					return null;
+				} else {
+					return player;
+				}
+
+			}
+
+			socket.on("clients", function (data) { //{clients: [{}, {}, {}]}      each client: {x: y: direction: color: }
+				var clients = data.clients;
+
+				for (var i = 0; i < clients.length; i++) {
+					var client = clients[i];
+					var player = adjustedOpponent(client.x, client.y);
+
+					if (player != null) {
+						drawCharacter(player.x, player.y, client.direction, client.color);
+					}
+				}
+			});
+
+			socket.on("myself", function (data) {
+				playerX = data.x;
+				playerY = data.y;
+				rotation = data.rotation;
+				playerBoost = data.boost;
+				isBoosting = data.isBoosting;
+			});
+
+			socket.on("death", function (data) {
+				clearInterval(loop);
+				document.write("gg m8");
+			})
+
+			function draw() {
+				ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+				canvas.width  = window.innerWidth-4;
+				canvas.height = window.innerHeight-4;
+
+				drawCharacter(0, 0, playerRot, "black"); //yourself
+				drawBoostLevel();
+				if (isBoosting) {
+					drawBoost(0, 0, playerRot);
+				}
+			}
+
+			var loop = setInterval(draw, 20);
+		</script>
+	</body>
+</html>
