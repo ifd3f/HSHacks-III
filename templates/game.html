@@ -30,6 +30,8 @@
 			var playerHeight = 90;
 			var socket = io();
 
+			var id;
+
 			var playerX = 100;
 			var playerY = 100;
 			var playerRot = 0;
@@ -150,31 +152,44 @@
 
 			}
 
-			socket.on("clients", function (data) { //{clients: [{}, {}, {}]}      each client: {x: y: direction: color: }
+			socket.on("clients", function (data) { //{clients: [{}, {}, {}]}      each client: {x: y: direction: color: playerBoost: isBoosting: id:}
 				var clients = data.clients;
 
 				for (var i = 0; i < clients.length; i++) {
 					var client = clients[i];
-					var player = adjustedOpponent(client.x, client.y);
 
-					if (player != null) {
-						drawCharacter(player.x, player.y, client.direction, client.color);
+					if (client.id == id) {
+
+						playerX = client.x;
+						playerY = client.y;
+						rotation = client.rotation;
+						playerBoost = client.boost;
+						isBoosting = client.isBoosting;
+
+					} else {
+
+						var player = adjustedOpponent(client.x, client.y);
+
+						if (player != null) {
+							drawCharacter(player.x, player.y, client.direction, client.color);
+							if (client.isBoosting) {
+								drawBoost(player.x, player.y, client.direction);
+							}
+
+						}
+
 					}
 				}
-			});
-
-			socket.on("myself", function (data) {
-				playerX = data.x;
-				playerY = data.y;
-				rotation = data.rotation;
-				playerBoost = data.boost;
-				isBoosting = data.isBoosting;
 			});
 
 			socket.on("death", function (data) {
 				clearInterval(loop);
 				document.write("gg m8");
 			})
+
+			socket.on("hello", function (data) {
+				id = data.id;
+			});
 
 			function draw() {
 				ctx.clearRect(0, 0, canvas.width, canvas.height);
