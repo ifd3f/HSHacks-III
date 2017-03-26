@@ -100,11 +100,12 @@ class GameRoom:
 		# Create collision handler
 		# Between a plow and a truck body
 		pb_handler = self.space.add_collision_handler(TRUCK_PLOW_TYPE, TRUCK_CORE_TYPE)
-		def pre_solve(arbiter, space, data): # Will only run if begin() was true
+		def pre_solve(arbiter, space, data): 
 			plow, truck = arbiter.shapes 	 # Extract the shapes
-			truck.body.player.living = False # Kill the guy that got t-boned
-			socketio.emit('death', {}, namespace='/game', room=truck.body.player.sid)
-			return True
+			if truck.body.player.living:	 # If he is alive
+				truck.body.player.living = False # Kill the guy that got t-boned
+				socketio.emit('death', {}, namespace='/game', room=truck.body.player.sid) # And tell him he died
+			return True # Then let his body fly across the map stupidly fast
 
 		pb_handler.pre_solve = pre_solve
 
@@ -245,6 +246,7 @@ rooms = {}  # room_name: room
 client2room = {}
 
 @app.route('/')
+@app.route('/lobby')
 def index():
 	return render_template('index.html')
 
