@@ -40,6 +40,8 @@
 			var boost = maxBoost;
 			var isBoosting = false;
 
+			var others = [];
+
 			var canvas = document.getElementById("myCanvas");
 			var ctx = canvas.getContext('2d');
 
@@ -154,6 +156,7 @@
 
 			socket.on("entities", function (data) { //{clients: [{}, {}, {}]}      each client: {x: y: direction: color: playerBoost: isBoosting: id:}
 				var entities = data;
+				players = [];
 
 				for (var i = 0; i < entities.length; i++) {
 					var ent = entities[i];
@@ -171,18 +174,7 @@
 						isBoosting = ent.isBoosting;
 
 					} else {
-
-						var player = adjustedOpponent(ent.x, ent.y);
-						console.log(player);
-
-						if (player != null) {
-							drawCharacter(player.x, player.y, ent.direction, ent.color);
-							if (ent.isBoosting) {
-								drawBoost(player.x, player.y, ent.direction);
-							}
-
-						}
-
+						players.push(ent);
 					}
 				}
 			});
@@ -210,6 +202,19 @@
 				drawBoostLevel();
 				if (isBoosting) {
 					drawBoost(0, 0, playerRot);
+				}
+
+				for (var i = 0; i < players.length; i++) {
+					var ent = players[i];
+					var player = adjustedOpponent(ent.x, ent.y);
+
+					if (player != null) {
+						drawCharacter(player.x, player.y, ent.direction, ent.color);
+						if (ent.isBoosting) {
+							drawBoost(player.x, player.y, ent.direction);
+						}
+
+					}
 				}
 			}
 
