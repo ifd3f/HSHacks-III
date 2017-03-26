@@ -15,8 +15,17 @@
 
 			#boostCanvas {
 				position: fixed;
-				bottom: 10px;
-				left: 10px;
+				top: 330px;
+				right: 10px;
+			}
+
+			#canvasdiv {
+			   width: 100%;
+			   text-align:center;
+			}
+
+			#gameCanvas {
+			   display: inline;
 			}
 		</style>
 
@@ -54,11 +63,15 @@
 			var canvas = document.getElementById("gameCanvas");
 			var ctx = canvas.getContext('2d');
 
+			canvas.width = ARENA_WIDTH + ARENA_THICKNESS*4;
+			canvas.height = ARENA_HEIGHT + ARENA_THICKNESS*4;
+
 			var boostCtx = document.getElementById("boostCanvas").getContext('2d');
 
 			var currentMousePos = { x: -1, y: -1 };
 		    $(document).mousemove(function(event) {
-		        currentMousePos.x = event.pageX;
+		    	var x = canvas.offsetLeft;
+		        currentMousePos.x = event.pageX - canvas.offsetLeft;
 		        currentMousePos.y = event.pageY;
 		    });
 
@@ -175,9 +188,6 @@
 
 			function draw() {
 				ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-				canvas.width  = window.innerWidth-4;
-				canvas.height = window.innerHeight-4;
 
 				var relativeX = currentMousePos.x - thisPlayer.x;
 				var relativeY = currentMousePos.y - thisPlayer.y;
