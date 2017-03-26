@@ -15,8 +15,17 @@
 
 			#boostCanvas {
 				position: fixed;
-				bottom: 10px;
-				left: 10px;
+				top: 330px;
+				right: 10px;
+			}
+
+			#canvasdiv {
+			   width: 100%;
+			   text-align:center;
+			}
+
+			#gameCanvas {
+			   display: inline;
 			}
 		</style>
 
@@ -58,7 +67,8 @@
 
 			var currentMousePos = { x: -1, y: -1 };
 		    $(document).mousemove(function(event) {
-		        currentMousePos.x = event.pageX;
+		    	var x = canvas.offsetLeft;
+		        currentMousePos.x = event.pageX - canvas.offsetLeft;
 		        currentMousePos.y = event.pageY;
 		    });
 
