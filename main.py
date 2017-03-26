@@ -1,5 +1,6 @@
 import math
 import random
+import string
 import threading
 import time
 
@@ -46,6 +47,9 @@ TRUCK_BODY_LENGTH = 30
 TRUCK_PLOW_TYPE = 100
 TRUCK_CORE_TYPE = 101
 
+# Matchmaking Parameters
+PEOPLE_PER_GAME = 6
+
 
 class Player:
 
@@ -81,7 +85,7 @@ class Player:
 
 class GameRoom:
 	
-	def __init__(self, players):
+	def __init__(self, players, room_name):
 		super(GameRoom, self).__init__()
 		self.players = players[:]
 		self.space = pymunk.Space()
@@ -200,9 +204,13 @@ def offsetBox(cx, cy, length, width):
 	return [(x1, y1), (x1, y2), (x2, y2), (x2, y1)]
 
 
+def randomString(n):
+	return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(n))
+
 app = Flask(__name__)
 
 players = []
+tokens = {} # token: roomname
 
 room = None
 
@@ -247,6 +255,10 @@ def on_brake(data):
 @socketio.on('ping', namespace='/game')
 def on_ping(data):
 	print('pong')
+	pass
+
+@socketio.on('search', namespace='/lobby')
+def on_begin_search(data):
 	pass
 
 if __name__ == '__main__':
