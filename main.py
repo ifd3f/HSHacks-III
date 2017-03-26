@@ -18,36 +18,11 @@ room = None
 BOOST_FORCE = 200.0
 NORMAL_FORCE = 50.0
 BRAKE_FRICTION = 0.1
-FRICTION = 0
+FRICTION = 40
 MAX_SPEED = 10.0
 MIN_SPEED = 2
 PLAYER_MASS = 1.0
 
-
-class Vector:
-
-	def __init__(self, x, y):
-		self.x = x
-		self.y = y
-
-	def __add__(self, other):
-		return Vector(self.x + other.x, self.y + other.y)
-
-	def __sub__(self, other):
-		return Vector(self.x - other.x, self.y - other.y)
-
-	def __mul__(self, other):
-		return Vector(self.x * other.x, self.y * other.y)
-
-	def __truediv__(self, other):
-		return Vector(self.x / other.x, self.y / other.y)
-
-	def __abs__(self):
-		return (self.x**2 + self.y**2)**0.5
-
-	def __iter__(self, other):
-		yield this.x
-		yield this.y
 
 class Player:
 
@@ -79,25 +54,27 @@ class GameRoom:
 		self.space = pymunk.Space()
 	
 	def update(self, dt, socketio):
+
 		for p in self.players:
 			force = NORMAL_FORCE * Vec2d.unit()
 			force.angle = p.rotation
-			print(p.rotation)
-			p.body.apply_force_at_local_point(force, (0, 0))
+			p.body.apply_force_at_local_point(force, p.body.center_of_gravity)
+
 		for body in self.space.bodies:
 			speed = body.velocity.get_length()
 			if speed > 0:
 				fricDir = -body.velocity.normalized()
+				print(1, body.velocity.normalized())
+				print(2, fricDir)
 				fricAmount = body.mass * FRICTION
 				frictionForce = fricDir * fricAmount * dt
 				if speed < MIN_SPEED:
 					body.velocity = Vec2d.zero()
-
 				else:
-					body.apply_force_at_local_point(frictionForce, (0,0))
-
+					body.apply_force_at_local_point(frictionForce, body.center_of_gravity)
 			if body.velocity.get_length() > MAX_SPEED:
 				body.velocity = MAX_SPEED * body.velocity.normalized()
+
 		self.space.step(dt)
 		socketio.emit('entities', self.getEncodedPositions(), callback=lambda: print('asdf'))
 
@@ -122,11 +99,11 @@ class GameRoom:
 
 	def createPlayer(self, socket_sid):
 		body = pymunk.Body(PLAYER_MASS, 1666)
-		front_physical = pymunk.Poly(body, offsetBox(0, 60, 60, 30), radius=5.0)
+		front_physical = pymunk.Poly(body, offsetBox(15, 0, 30, 60), radius=5.0)
 		front_physical.elasticity = 1.5
-		back_physical = pymunk.Poly(body, offsetBox(0, 0, 60, 90), radius=5.0)
+		back_physical = pymunk.Poly(body, offsetBox(-45, 0, 90, 60), radius=5.0)
 		back_physical.elasticity = 3.0
-		back_sensor = pymunk.Poly(body, offsetBox(0, 0, 70, 100), radius=5.0) 
+		back_sensor = pymunk.Poly(body, offsetBox(-45, 0, 100, 70), radius=5.0) 
 		back_sensor.contact = True
 		body.position = 100*random.random(), 100*random.random()
 		body.angle = 2*math.pi*random.random()
