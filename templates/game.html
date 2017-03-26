@@ -136,6 +136,7 @@
 			}
 
 			$(document).mousedown(function(event) {
+				if (!thisPlayer.living) return;
     			switch (event.which) {
 					case 1:
 						socket.emit("boost", {});
@@ -147,6 +148,7 @@
 			});
 
 			$(document).mouseup(function(event) {
+				if (!thisPlayer.living) return;
     			switch (event.which) {
 					case 3:
 						socket.emit("brake", {brake: false});
@@ -181,9 +183,7 @@
 			});
 
 			socket.on("death", function(data) {
-				clearInterval(loop);
-				document.write("gg m8");
-				console.log('ded');
+				thisPlayer.living = false
 			})
 
 			function draw() {
@@ -192,8 +192,10 @@
 				var relativeX = currentMousePos.x - thisPlayer.x;
 				var relativeY = currentMousePos.y - thisPlayer.y;
 
-				var angle = Math.atan2(relativeY, relativeX);
-				socket.emit("direction", {angle: angle});
+				if (player.living) {
+					var angle = Math.atan2(relativeY, relativeX);
+					socket.emit("direction", {angle: angle});
+				}
 
 				drawBackground();
 
@@ -215,7 +217,9 @@
 
 				drawBoostLevel(thisPlayer.boostLevel);
 
-				socket.emit('ping', {});
+				if (thisPlayer.living) {
+					socket.emit('ping', {});
+				}
 
 			}
 

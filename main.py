@@ -110,6 +110,12 @@ class GameRoom:
 			if truck.body.player.living:	 # If he is alive
 				truck.body.player.living = False # Kill the guy that got t-boned
 				socketio.emit('death', {}, namespace='/game', room=truck.body.player.sid) # And tell him he died
+				living = self.stillLiving()
+				if (len(living) == 1):
+					socketio.emit('gg', {winner: living[0].body.player.sid}, namespace='/game', room=truck.body.player.sid);
+				elif (len(living) <= 0):
+					socketio.emit('gg', {winner: "No one won rip gg m80s"}, namespace='/game', room=truck.body.player.sid);
+
 			return True # Then let his body fly across the map stupidly fast
 		pb_handler.pre_solve = kill_pre_solve
 		db_handler.pre_solve = kill_pre_solve
@@ -134,6 +140,14 @@ class GameRoom:
 			s.elasticity = 0.8
 			s.collision_type = ARENA_BORDER_TYPE
 		self.space.add(body, *shapes)
+
+	def stillLiving(self):
+		living = []
+		for player in self.players:
+			if (player.living):
+				living.append(player)
+
+		return living
 
 	def update(self, dt, socketio):
 
