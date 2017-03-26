@@ -169,7 +169,7 @@
 						playerY = ent.y;
 						console.log(playerY);
 
-						playerRot = ent.rotation;
+						playerRot = ent.direction;
 						playerBoost = ent.boost;
 						isBoosting = ent.isBoosting;
 
@@ -187,10 +187,6 @@
 			socket.on("hello", function (data) {
 				id = data.id;
 			});
-
-			socket.on('asdf', function() {
-				console.log('fasdafsdasdf');
-			})
 
 			function draw() {
 				ctx.clearRect(0, 0, canvas.width, canvas.height);
