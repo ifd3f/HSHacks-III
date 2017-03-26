@@ -71,7 +71,6 @@ class GameRoom:
 	
 	def update(self, dt, socketio):
 		#self.space.step(dt)
-		print('asdfasdfasdf')
 		socketio.emit('entities', self.getEncodedPositions(), callback=lambda: print('asdf'))
 
 	def getEncodedPositions(self):
@@ -164,6 +163,5 @@ if __name__ == '__main__':
 	webserver = threading.Thread(target=lambda: socketio.run(app, host='0.0.0.0'))
 	webserver.start()
 	while True:
-		print('asdf')
 		room.update(0.05, socketio)
-		time.sleep(1)
+		time.sleep(0.05)
