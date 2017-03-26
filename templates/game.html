@@ -63,6 +63,9 @@
 			var canvas = document.getElementById("gameCanvas");
 			var ctx = canvas.getContext('2d');
 
+			canvas.width = ARENA_WIDTH + ARENA_THICKNESS*4;
+			canvas.height = ARENA_HEIGHT + ARENA_THICKNESS*4;
+
 			var boostCtx = document.getElementById("boostCanvas").getContext('2d');
 
 			var currentMousePos = { x: -1, y: -1 };
@@ -185,9 +188,6 @@
 
 			function draw() {
 				ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-				canvas.width  = window.innerWidth-4;
-				canvas.height = window.innerHeight-4;
 
 				var relativeX = currentMousePos.x - thisPlayer.x;
 				var relativeY = currentMousePos.y - thisPlayer.y;
