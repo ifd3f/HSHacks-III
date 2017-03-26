@@ -1,5 +1,5 @@
 flask==0.12
 flask-socketio==2.8.6
 gevent==1.2.1
-gevent-websockets==0.10.1
+gevent-websocket==0.10.1
 pymunk==5.0.0
