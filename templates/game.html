@@ -110,6 +110,20 @@
 				boostCtx.fillRect(borderWidth, borderWidth + (maxBoostHeight - boostHeight), boostWidth, boostHeight);
 			}
 
+			var distanceBetweenDots = 30;
+
+			function drawBackground() {
+				for (var i = 0; i < canvas.width/distanceBetweenDots; i++) {
+					for (var j = 0; j < canvas.height/distanceBetweenDots; j++) {
+						var x = i * distanceBetweenDots + playerX % distanceBetweenDots
+						var y = j * distanceBetweenDots + playerY % distanceBetweenDots;
+
+						ctx.fillStyle = "gray";
+						ctx.fillRect(x, y, 2, 2);
+					}
+				}
+			}
+
 			$(document).mousemove(function(event) {
 				var relativeX = event.pageX - canvas.width/2;
 				var relativeY = event.pageY - canvas.height/2;
