@@ -32,8 +32,8 @@
 
 			var id;
 
-			var playerX = 100;
-			var playerY = 100;
+			var playerX = 0;
+			var playerY = 0;
 			var playerRot = 0;
 			var color = "green";
 			var maxBoost = 2;
@@ -153,15 +153,19 @@
 			}
 
 			socket.on("entities", function (data) { //{clients: [{}, {}, {}]}      each client: {x: y: direction: color: playerBoost: isBoosting: id:}
-				console.log(data);
 				var entities = data;
 
-				for (var ent in entities) {
+				for (var i = 0; i < entities.length; i++) {
+					var ent = entities[i];
+
 
 					if (ent.id == id) {
 
 						playerX = ent.x;
+
 						playerY = ent.y;
+						console.log(playerY);
+
 						rotation = ent.rotation;
 						playerBoost = ent.boost;
 						isBoosting = ent.isBoosting;
@@ -169,6 +173,7 @@
 					} else {
 
 						var player = adjustedOpponent(ent.x, ent.y);
+						console.log(player);
 
 						if (player != null) {
 							drawCharacter(player.x, player.y, ent.direction, ent.color);
