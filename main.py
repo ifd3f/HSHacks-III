@@ -7,7 +7,7 @@ import time
 
 import flask
 from flask import Flask, render_template, request
-from flask_socketio import SocketIO, emit, send
+from flask_socketio import SocketIO, emit, send, join_room
 
 import pymunk
 from pymunk.vec2d import Vec2d
@@ -89,9 +89,9 @@ class Player:
 
 class GameRoom:
 	
-	def __init__(self, players):
+	def __init__(self):
 		super(GameRoom, self).__init__()
-		self.players = players[:]
+		self.players = []
 		self.space = pymunk.Space()
 		self.room_name = randomString(ROOM_NAME_LENGTH)
 
@@ -150,7 +150,7 @@ class GameRoom:
 
 		self.space.step(dt)
 
-		socketio.emit('entities', self.getEncodedPositions(), namespace='/game')
+		socketio.emit('entities', self.getEncodedPositions(), namespace='/game', room=self.room_name)
 
 	def getEncodedPositions(self):
 		return [
@@ -199,6 +199,19 @@ class GameRoom:
 				return
 
 
+class RoomThread(threading.Thread):
+	
+	def __init__(self, room):
+		super().__init__()
+		self.room = room
+
+	def run(self):
+		self.room.init()
+		while True:
+			self.room.update(UPDATE_PERIOD, socketio)
+			time.sleep(UPDATE_PERIOD)		
+
+
 def offsetBox(cx, cy, length, width):
 	hl = length / 2
 	hw = width / 2
@@ -215,12 +228,14 @@ def randomString(n):
 async def lobby_manager(socketio):
 	while True:  # Every 2 seconds
 		while len(searching) >= PEOPLE_PER_GAME:  # If there are enough people for a game
+			print('Enough people')
 			room = GameRoom()	# Create a new room
+			rooms[room.room_name] = room
 			for _ in range(0, PEOPLE_PER_GAME): # For each person
 				token = randomString(TOKEN_LENGTH) # Generate a token for each person
 				tokens[token] = room.room_name # Link the token to the room
 				sid = searching.pop(0)
-				socketio.emit('found', {'token': token}, room=sid) # Tell the client the token
+				socketio.emit('found', {'token': token}, namespace='/lobby', room=sid) # Tell the client the token
 		await asyncio.sleep(2)
 
 app = Flask(__name__)
@@ -228,6 +243,7 @@ app = Flask(__name__)
 searching = []
 tokens = {} # token: room_name
 rooms = {}  # room_name: room
+client2room = {}
 
 @app.route('/')
 def index():
@@ -246,30 +262,43 @@ def game():
 socketio = SocketIO(app)
 
 @socketio.on('connect', namespace='/game')
-def on_connect():
+def on_connect():  # Request the player to send the room name
+	emit('gibroomname', {})
+
+@socketio.on('room_name', namespace='/game')
+def on_room_name(data):  # Initialize the room
 	sid = request.sid
+	join_room(data['room_name'])
+	room = rooms[data['room_name']]
 	room.createPlayer(sid)
+	client2room[sid] = room
 	emit('hello', {'id': sid})
+	if len(room.players) >= PEOPLE_PER_GAME:
+		RoomThread(room).start()
 
 @socketio.on('disconnect', namespace='/game')
 def on_disconnect():
 	sid = request.sid
+	room = client2room[sid]
 	room.removePlayer(sid)
 
 @socketio.on('direction', namespace='/game')
 def on_direction(data):
+	room = client2room[request.sid]
 	player = room.player_by_sid(request.sid)
 	if player.living:
 		player.rotation = data['angle']
 
 @socketio.on('boost', namespace='/game')
 def on_boost(data):
+	room = client2room[request.sid]
 	player = room.player_by_sid(request.sid)
 	if time.time() - player.began_boost > BOOST_COOLDOWN:
 		player.began_boost = time.time()
 
 @socketio.on('brake', namespace='/game')
 def on_brake(data):
+	room = client2room[request.sid]
 	player = room.player_by_sid(request.sid)
 	player.braking = data['brake']
 

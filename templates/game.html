@@ -32,8 +32,7 @@
 			const ARENA_WIDTH = 1000;
 			const ARENA_HEIGHT = 500;
 			const ARENA_THICKNESS = 10;
-
-			var room = '{{room}}'
+			const ROOM_NAME = '{{room}}'
 
 			var plowWidth = 30;
 			var plowLength = 15;
@@ -149,6 +148,14 @@
 
 			var socket = io('/game');
 
+			socket.on('gibroomname', function(data) {
+				socket.emit('room_name', {room_name: ROOM_NAME})
+			});
+
+			socket.on("hello", function (data) {
+				thisId = data.id;
+			});
+
 			socket.on("entities", function (data) { 
 				allPlayers = data;
 				for (var i in data) {
@@ -164,10 +171,6 @@
 				clearInterval(loop);
 				document.write("gg m8");
 			})
-
-			socket.on("hello", function (data) {
-				thisId = data.id;
-			});
 
 			function draw() {
 				ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -200,7 +203,6 @@
 				}
 
 				drawBoostLevel(thisPlayer.boostLevel);
-				console.log(thisPlayer.boostLevel);
 
 				socket.emit('ping');
 

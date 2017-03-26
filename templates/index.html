@@ -31,6 +31,7 @@
 	<script type="text/javascript">
 		var socket = io('/lobby');
 		var searching = false;
+		var pinger;
 
 		function onButtonClicked() {
 			searching = !searching;
@@ -38,11 +39,13 @@
 				console.log('Beginning search')
 				$('#lobby-btn').html('Stop Search');
 				socket.emit('search', {running: true});
+				pinger = setInterval(function() {socket.emit('ping', {})}, 2000);
 			} else {
 				console.log('Stopping search')
 				$('#lobby-btn').html('Join Matchmaking');
 				$('#people').html('');
 				socket.emit('search', {running: false});
+				clearInterval(pinger)
 			}
 		}
 
@@ -53,6 +56,7 @@
 		});
 
 		socket.on('found', function(data) { 
+			console.log('Found enough people')
 			$('#token-form input').val(data.token);  // Put the token into a hidden form
 			$('#token-form').submit();  // Submit the hidden form
 		});
