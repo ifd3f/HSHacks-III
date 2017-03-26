@@ -18,9 +18,9 @@ room = None
 BOOST_FORCE = 200.0
 NORMAL_FORCE = 50.0
 BRAKE_FRICTION = 0.1
-FRICTION = 40
-MAX_SPEED = 10.0
-MIN_SPEED = 2
+FRICTION = 20
+MAX_SPEED = 250.0
+MIN_SPEED = 5
 PLAYER_MASS = 1.0
 
 
@@ -59,6 +59,7 @@ class GameRoom:
 			force = NORMAL_FORCE * Vec2d.unit()
 			force.angle = p.rotation
 			p.body.velocity += force/p.body.mass
+			p.body.angular_velocity = 0
 
 		for body in self.space.bodies:
 			speed = body.velocity.get_length()

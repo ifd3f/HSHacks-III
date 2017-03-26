@@ -110,16 +110,16 @@
 				boostCtx.fillRect(borderWidth, borderWidth + (maxBoostHeight - boostHeight), boostWidth, boostHeight);
 			}
 
-			var distanceBetweenDots = 30;
+			var distanceBetweenDots = 75;
 
 			function drawBackground() {
-				for (var i = 0; i < canvas.width/distanceBetweenDots; i++) {
-					for (var j = 0; j < canvas.height/distanceBetweenDots; j++) {
-						var x = i * distanceBetweenDots + playerX % distanceBetweenDots
-						var y = j * distanceBetweenDots + playerY % distanceBetweenDots;
+				for (var i = 0; i < canvas.width/distanceBetweenDots + 1; i++) {
+					for (var j = 0; j < canvas.height/distanceBetweenDots + 1; j++) {
+						var x = i * distanceBetweenDots - playerX % distanceBetweenDots
+						var y = j * distanceBetweenDots - playerY % distanceBetweenDots;
 
 						ctx.fillStyle = "gray";
-						ctx.fillRect(x, y, 2, 2);
+						ctx.fillRect(x, y, 5, 5);
 					}
 				}
 			}
@@ -207,12 +207,13 @@
 			function draw() {
 				ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-				drawBackground();
-
 				canvas.width  = window.innerWidth-4;
 				canvas.height = window.innerHeight-4;
 
+				drawBackground();
+
 				drawCharacter(0, 0, playerRot, "black"); //yourself
+
 				drawBoostLevel();
 				if (isBoosting) {
 					drawBoost(0, 0, playerRot);
