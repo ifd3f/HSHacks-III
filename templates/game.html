@@ -26,8 +26,8 @@
 		<canvas id="boostCanvas" width="50" height="200"></canvas>
 
 		<script type="text/javascript">	
-			var playerR = 30;
-			var playerHeight = 90;
+			var playerR = 5;
+			var playerHeight = 18;
 			var socket = io();
 
 			var id;
@@ -48,10 +48,6 @@
 			var boostCtx = document.getElementById("boostCanvas").getContext('2d');
 
 			function drawCharacter(centerX, centerY, angle, color) {
-				//angle -= Math.PI / 2
-
-				centerX += canvas.width/2;
-				centerY += canvas.height/2;
 
 				ctx.save();
 
@@ -72,11 +68,9 @@
 			}
 
 			function drawBoost(playerX, playerY, playerRot) {
-				playerX += canvas.width/2;
-				playerY += canvas.height/2;
 
-				boostWidth = 25;
-				boostHeight = 50;
+				boostWidth = 5;
+				boostHeight = 10;
 
 				ctx.save();
 
@@ -125,8 +119,8 @@
 			}
 
 			$(document).mousemove(function(event) {
-				var relativeX = event.pageX - canvas.width/2;
-				var relativeY = event.pageY - canvas.height/2;
+				var relativeX = event.pageX - playerX
+				var relativeY = event.pageY - playerY;
 
 				var angle = Math.atan2(relativeY, relativeX);
 				console.log(angle)
@@ -158,16 +152,16 @@
 			function adjustedOpponent(x, y) { //returns null if outside of frame
 				var player = {x:x - playerX, y:y - playerY};
 
-				var maxX = canvas.width/2 + playerR;
+				/*var maxX = canvas.width/2 + playerR;
 				var minX = -canvas.width/2 - playerR;
 				var maxY = canvas.height/2 + playerHeight;
 				var minY = -canvas.height/2 - playerR;
 
 				if (player.x > maxX || player.x < minX || player.y > maxY || player.y < minY) {
 					return null;
-				} else {
+				} else {*/
 					return player;
-				}
+				//}
 
 			}
 
@@ -212,23 +206,19 @@
 
 				drawBackground();
 
-				drawCharacter(0, 0, playerRot, "black"); //yourself
+				drawCharacter(playerX, playerY, playerRot, "black"); //yourself
 
 				drawBoostLevel();
 				if (isBoosting) {
-					drawBoost(0, 0, playerRot);
+					drawBoost(playerX, playerY, playerRot);
 				}
 
 				for (var i = 0; i < players.length; i++) {
 					var ent = players[i];
-					var player = adjustedOpponent(ent.x, ent.y);
+					drawCharacter(ent.x, ent.y, ent.direction, ent.color);
 
-					if (player != null) {
-						drawCharacter(player.x, player.y, ent.direction, ent.color);
-						if (ent.isBoosting) {
-							drawBoost(player.x, player.y, ent.direction);
-						}
-
+					if (ent.isBoosting) {
+						drawBoost(ent.x, ent.y, ent.direction);
 					}
 				}
 
