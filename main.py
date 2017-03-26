@@ -23,8 +23,8 @@ MAX_SPEED = 250.0
 MIN_SPEED = 5
 PLAYER_MASS = 1.0
 
-ARENA_WIDTH = 1600
-ARENA_HEIGHT = 900
+ARENA_WIDTH = 1400
+ARENA_HEIGHT = 700
 ARENA_THICKNESS = 10
 
 class Player:
@@ -57,12 +57,12 @@ class GameRoom:
 		self.space = pymunk.Space()
 
 	def init_borders(self):
-		body = pymunk.Body(body_type=Body.STATIC)
+		body = pymunk.Body(body_type=pymunk.Body.STATIC)
 		shapes = [
-			pymunk.Poly(body, offsetBox(ARENA_WIDTH/2, 		-ARENA_THICKNESS/2, 				ARENA_WIDTH + 2*ARENA_THICKNESS, ARENA_THICKNESS)),
-			pymunk.Poly(body, offsetBox(ARENA_WIDTH/2, 		ARENA_HEIGHT + ARENA_THICKNESS/2, 	ARENA_WIDTH + 2*ARENA_THICKNESS, ARENA_THICKNESS)),
-			pymunk.Poly(body, offsetBox(-ARENA_THICKNESS/2, ARENA_HEIGHT/2, 					ARENA_THICKNESS, ARENA_HEIGHT + 2*ARENA_THICKNESS)),
-			pymunk.Poly(body, offsetBox(ARENA_WIDTH/2, 		-ARENA_THICKNESS/2, 				ARENA_THICKNESS, ARENA_HEIGHT + 2*ARENA_THICKNESS))			
+			pymunk.Poly(body, offsetBox(ARENA_WIDTH/2, 						-ARENA_THICKNESS/2, 					ARENA_WIDTH + 2*ARENA_THICKNESS, 	ARENA_THICKNESS)),
+			pymunk.Poly(body, offsetBox(ARENA_WIDTH/2, 						ARENA_HEIGHT + ARENA_THICKNESS, 		ARENA_WIDTH + 2*ARENA_THICKNESS, 	ARENA_THICKNESS)),
+			pymunk.Poly(body, offsetBox(-ARENA_THICKNESS/2, 				ARENA_HEIGHT/2, 						ARENA_THICKNESS, 					ARENA_HEIGHT + 2*ARENA_THICKNESS)),
+			pymunk.Poly(body, offsetBox(ARENA_WIDTH + ARENA_THICKNESS/2,	ARENA_HEIGHT/2 + ARENA_THICKNESS/2, 	ARENA_THICKNESS, 					ARENA_HEIGHT + 2*ARENA_THICKNESS))			
 		]
 		self.space.add(body, *shapes)
 
@@ -183,6 +183,7 @@ if __name__ == '__main__':
 	room = GameRoom([])
 	webserver = threading.Thread(target=lambda: socketio.run(app, host='0.0.0.0'))
 	webserver.start()
+	room.init_borders()
 	while True:
 		room.update(0.05, socketio)
 		time.sleep(0.05)
