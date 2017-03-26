@@ -7,6 +7,7 @@ from flask import Flask, render_template, request
 from flask_socketio import SocketIO, emit, send
 
 import pymunk
+from pymunk.vec2d import Vec2d
 
 app = Flask(__name__)
 
@@ -14,11 +15,11 @@ players = []
 
 room = None
 
-BOOST_FORCE = 20
-NORMAL_FORCE = 5
+BOOST_FORCE = 200.0
+NORMAL_FORCE = 50.0
 BRAKE_FRICTION = 0.1
-NORMAL_FRICTION = 0.75
-PLAYER_MASS = 1
+MAX_SPEED = 1000.0
+PLAYER_MASS = 1.0
 
 
 class Vector:
@@ -76,7 +77,15 @@ class GameRoom:
 		self.space = pymunk.Space()
 	
 	def update(self, dt, socketio):
-		#self.space.step(dt)
+		for p in self.players:
+			force = NORMAL_FORCE * Vec2d.unit()
+			force.angle = p.rotation
+			print(force)
+			p.body.apply_force_at_local_point(force, (0, 0))
+		for body in self.space.bodies:
+			if body.velocity.get_length() > MAX_SPEED:
+				body.velocity = MAX_SPEED * body.velocity.normalized()
+		self.space.step(dt)
 		socketio.emit('entities', self.getEncodedPositions(), callback=lambda: print('asdf'))
 
 	def getEncodedPositions(self):
@@ -157,7 +166,7 @@ def on_disconnect():
 @socketio.on('direction')
 def on_direction(data):
 	player = room.player_by_sid(request.sid)
-	player.rotation = data['angle'] + math.pi/2
+	player.rotation = data['angle']
 
 @socketio.on('boost')
 def on_boost(data):

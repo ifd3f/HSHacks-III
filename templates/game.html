@@ -48,6 +48,8 @@
 			var boostCtx = document.getElementById("boostCanvas").getContext('2d');
 
 			function drawCharacter(centerX, centerY, angle, color) {
+				//angle -= Math.PI / 2
+
 				centerX += canvas.width/2;
 				centerY += canvas.height/2;
 
@@ -169,7 +171,7 @@
 						playerY = ent.y;
 						console.log(playerY);
 
-						playerRot = ent.direction;
+						playerRot = ent.direction - Msth.PI/2;
 						playerBoost = ent.boost;
 						isBoosting = ent.isBoosting;
 
