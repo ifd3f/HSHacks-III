@@ -26,26 +26,24 @@
 		<canvas id="boostCanvas" width="50" height="200"></canvas>
 
 		<script type="text/javascript">	
+			const ARENA_WIDTH = 1400;
+			const ARENA_HEIGHT = 700;
+			const ARENA_THICKNESS = 10;
+
 			var playerR = 10;
 			var playerHeight = 30;
-			var socket = io();
 
-			var id;
+			var thisId;
+			var thisPlayer = {
+				x: 0,
+				y: 0,
+				living: true,
+				direction: 0,
+				isBoosting: false,
+				boostRemaining: 1
+			};
 
-			var arenaWidth = 1400;
-			var arenaHeight = 700;
-			var wallThickness = 10;
-
-			var playerX = 0;
-			var playerY = 0;
-			var playerRot = 0;
-			var playerLiving = true;
-			var color = "green";
-			var maxBoost = 2;
-			var boost = maxBoost;
-			var isBoosting = false;
-
-			var others = [];
+			var allPlayers = [];
 
 			var canvas = document.getElementById("myCanvas");
 			var ctx = canvas.getContext('2d');
@@ -90,9 +88,9 @@
 				ctx.translate(-playerX, -playerY);
 
 				ctx.beginPath();
-				ctx.moveTo(playerX - playerHeight, playerY + borderWidth/2);
-				ctx.lineTo(playerX - playerHeight - boostHeight, playerY);
-				ctx.lineTo(playerX - playerHeight, playerY - borderWidth/2);
+				ctx.moveTo(playerX - playerHeight, playerY);
+				ctx.lineTo(playerX - playerHeight - boostHeight, playerY + boostWidth / 2);
+				ctx.lineTo(playerX - playerHeight - boostHeight, playerY - boostWidth / 2);
 				ctx.closePath();
 
 				ctx.fillStyle = "yellow";
@@ -118,19 +116,9 @@
 			var distanceBetweenDots = 75;
 
 			function drawBackground() {
-				/*for (var i = 0; i < canvas.width/distanceBetweenDots + 1; i++) {
-					for (var j = 0; j < canvas.height/distanceBetweenDots + 1; j++) {
-						var x = i * distanceBetweenDots - playerX % distanceBetweenDots
-						var y = j * distanceBetweenDots - playerY % distanceBetweenDots;
-
-						ctx.fillStyle = "gray";
-						ctx.fillRect(x, y, 5, 5);
-					}
-				}*/
-
 				ctx.strokeStyle = "black";
-				ctx.lineWidth = wallThickness;
-				ctx.strokeRect(wallThickness/2, wallThickness/2, arenaWidth + wallThickness*2, arenaHeight + wallThickness*2);
+				ctx.lineWidth = ARENA_THICKNESS;
+				ctx.strokeRect(ARENA_THICKNESS/2, ARENA_THICKNESS/2, ARENA_WIDTH + ARENA_THICKNESS*2, ARENA_HEIGHT + ARENA_THICKNESS*2);
 			}
 
 			$(document).mousedown(function(event) {
@@ -153,42 +141,19 @@
 			});
 
 			function adjustedOpponent(x, y) { //returns null if outside of frame
-				var player = {x:x - playerX, y:y - playerY};
-
-				/*var maxX = canvas.width/2 + playerR;
-				var minX = -canvas.width/2 - playerR;
-				var maxY = canvas.height/2 + playerHeight;
-				var minY = -canvas.height/2 - playerR;
-
-				if (player.x > maxX || player.x < minX || player.y > maxY || player.y < minY) {
-					return null;
-				} else {*/
-					return player;
-				//}
-
+				var player = {x:x - thisPlayer.x, y:y - thisPlayer.y};
+				return player;
 			}
 
-			socket.on("entities", function (data) { //{clients: [{}, {}, {}]}      each client: {x: y: direction: color: playerBoost: isBoosting: id:}
-				var entities = data;
-				players = [];
+			var socket = io();
 
-				for (var i = 0; i < entities.length; i++) {
-					var ent = entities[i];
-
-
-					if (ent.id == id) {
-
-						playerX = ent.x;
-
-						playerY = ent.y;
-						playerLiving = ent.living;
-
-						playerRot = ent.direction;
-						playerBoost = ent.boostRemaining;
-						isBoosting = ent.isBoosting;
-
-					} else {
-						players.push(ent);
+			socket.on("entities", function (data) { 
+				allPlayers = data;
+				for (var i in data) {
+					ent = data[i]
+					if (ent.id == thisId) {
+						thisPlayer = ent;
+						break;
 					}
 				}
 			});
@@ -199,7 +164,7 @@
 			})
 
 			socket.on("hello", function (data) {
-				id = data.id;
+				thisId = data.id;
 			});
 
 			function draw() {
@@ -208,31 +173,35 @@
 				canvas.width  = window.innerWidth-4;
 				canvas.height = window.innerHeight-4;
 
-				var relativeX = currentMousePos.x - playerX
-				var relativeY = currentMousePos.y - playerY;
+				var relativeX = currentMousePos.x - thisPlayer.x;
+				var relativeY = currentMousePos.y - thisPlayer.y;
 
 				var angle = Math.atan2(relativeY, relativeX);
 				socket.emit("direction", {angle: angle});
 
 				drawBackground();
 
-				drawCharacter(playerX, playerY, playerRot, playerLiving ? "blue" : "black"); //yourself
-
-				drawBoostLevel(playerBoost);
-				if (isBoosting) {
-					drawBoost(playerX, playerY, playerRot);
-				}
-
-				for (var i = 0; i < players.length; i++) {
-					var ent = players[i];
-					drawCharacter(ent.x, ent.y, ent.direction, ent.color);
-
+				for (var i in allPlayers) {
+					var ent = allPlayers[i];
+					var color;
+					console.log(ent.living);
+					if (!ent.living) {
+						color = 'black';
+					} else if (ent.id == thisId) {
+						color = 'blue';
+					} else {
+						color = 'red';
+					}
+					console.log(color);
+					drawCharacter(ent.x, ent.y, ent.direction, color);
 					if (ent.isBoosting) {
 						drawBoost(ent.x, ent.y, ent.direction);
 					}
 				}
 
-				socket.send('ping');
+				drawBoostLevel(thisPlayer.boostRemaining);
+
+				socket.emit('ping');
 
 			}
 

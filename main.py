@@ -10,6 +10,7 @@ import pymunk
 from pymunk.vec2d import Vec2d
 
 
+TIMEOUT = 3
 BOOST_DURATION = 1.5
 BOOST_COOLDOWN = 5
 BOOST_FORCE = 50.0
@@ -76,6 +77,7 @@ class GameRoom:
 		def begin(arbiter, space, data):
 			plow, truck = arbiter.shapes # Between a plow and the core
 			truck.body.player.living = False
+			return False
 		handler.begin = begin
 
 		# Create borders
@@ -129,7 +131,6 @@ class GameRoom:
 				'direction': player.rotation,
 				'isBoosting': player.is_boosting(),
 				'boostRemaining': player.get_percent(),
-				'color': 'red' if player.living else 'black'
 			} for player in self.players
 		]
 
@@ -223,6 +224,11 @@ def on_boost(data):
 def on_brake(data):
 	player = room.player_by_sid(request.sid)
 	player.braking = data['brake']
+
+@socketio.on('ping')
+def on_ping(data):
+	print('pong')
+	pass
 
 if __name__ == '__main__':
 	room = GameRoom([])
