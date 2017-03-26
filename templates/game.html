@@ -39,6 +39,7 @@
 			var playerX = 0;
 			var playerY = 0;
 			var playerRot = 0;
+			var playerLiving = true;
 			var color = "green";
 			var maxBoost = 2;
 			var boost = maxBoost;
@@ -180,6 +181,7 @@
 						playerX = ent.x;
 
 						playerY = ent.y;
+						playerLiving = ent.living;
 
 						playerRot = ent.direction;
 						playerBoost = ent.boostRemaining;
@@ -214,7 +216,7 @@
 
 				drawBackground();
 
-				drawCharacter(playerX, playerY, playerRot, "black"); //yourself
+				drawCharacter(playerX, playerY, playerRot, playerLiving ? "blue" : "black"); //yourself
 
 				drawBoostLevel(playerBoost);
 				if (isBoosting) {

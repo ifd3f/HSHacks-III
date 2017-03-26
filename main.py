@@ -9,11 +9,6 @@ from flask_socketio import SocketIO, emit, send
 import pymunk
 from pymunk.vec2d import Vec2d
 
-app = Flask(__name__)
-
-players = []
-
-room = None
 
 BOOST_DURATION = 1.5
 BOOST_COOLDOWN = 5
@@ -30,12 +25,18 @@ ARENA_WIDTH = 1400
 ARENA_HEIGHT = 700
 ARENA_THICKNESS = 10
 
+# Collision detection types
+TRUCK_PLOW_TYPE = 100
+TRUCK_CORE_TYPE = 101
+
+
 class Player:
 
-	def __init__(self, socket_id, room, body):
-		self.socket_id = socket_id
+	def __init__(self, sid, room, body, living=True):
+		self.sid = sid
 		self.room = room
 		self.body = body
+		self.living = living
 
 		self.began_boost = 0
 		self.braking = False
@@ -60,6 +61,7 @@ class Player:
 	def rotation(self, val):
 		self.body.angle = val
 
+
 class GameRoom:
 	
 	def __init__(self, players):
@@ -67,7 +69,16 @@ class GameRoom:
 		self.players = players[:]
 		self.space = pymunk.Space()
 
-	def init_borders(self):
+	def init(self):
+		
+		# Create collision handler
+		handler = self.space.add_collision_handler(TRUCK_PLOW_TYPE, TRUCK_CORE_TYPE)
+		def begin(arbiter, space, data):
+			plow, truck = arbiter.shapes # Between a plow and the core
+			truck.body.player.living = False
+		handler.begin = begin
+
+		# Create borders
 		body = pymunk.Body(body_type=pymunk.Body.STATIC)
 		shapes = [
 			pymunk.Poly(body, offsetBox(ARENA_WIDTH/2, 						-ARENA_THICKNESS/2, 					ARENA_WIDTH + 2*ARENA_THICKNESS, 	ARENA_THICKNESS)),
@@ -82,9 +93,9 @@ class GameRoom:
 		for p in self.players:
 			force = (BOOST_FORCE if p.is_boosting() else NORMAL_FORCE) * Vec2d.unit()
 			force.angle = p.rotation
-			print(p.body.velocity.get_length())
-			p.body.velocity += force/p.body.mass
-			p.body.angular_velocity = 0
+			if p.living:
+				p.body.velocity += force/p.body.mass
+				p.body.angular_velocity = 0
 
 		for body in self.space.bodies:
 			speed = body.velocity.get_length()
@@ -106,37 +117,46 @@ class GameRoom:
 				body.velocity = max_speed * body.velocity.normalized()
 
 		self.space.step(dt)
-		socketio.emit('entities', self.getEncodedPositions(), callback=lambda: print('asdf'))
+		socketio.emit('entities', self.getEncodedPositions())
 
 	def getEncodedPositions(self):
 		return [
 			{
-				'id': player.socket_id,
+				'id': player.sid,
 				'x': player.get_pos().x,
 				'y': player.get_pos().y,
+				'living': player.living,
 				'direction': player.rotation,
 				'isBoosting': player.is_boosting(),
 				'boostRemaining': player.get_percent(),
-				'color': 'red'
+				'color': 'red' if player.living else 'black'
 			} for player in self.players
 		]
 
 	def player_by_sid(self, sid):
 		for p in self.players:
-			if p.socket_id == sid:
+			if p.sid == sid:
 				return p
 		return None
 
 	def createPlayer(self, socket_sid):
+
 		body = pymunk.Body(PLAYER_MASS, 1666)
+
 		front_physical = pymunk.Poly(body, offsetBox(5, 0, 10, 20), radius=5.0)
 		front_physical.elasticity = 1.5
+		front_physical.collision_type = TRUCK_PLOW_TYPE
+
 		back_physical = pymunk.Poly(body, offsetBox(-15, 0, 30, 20), radius=5.0)
 		back_physical.elasticity = 3.0
-		back_sensor = pymunk.Poly(body, offsetBox(-15, 0, 34, 24), radius=5.0) 
-		back_sensor.contact = True
+		back_physical.collision_type = TRUCK_CORE_TYPE
+
+		back_sensor = pymunk.Poly(body, offsetBox(-15, 0, 40, 30), radius=5.0) 
+		back_sensor.sensor = True
+
 		body.position = ARENA_WIDTH*random.random(), ARENA_HEIGHT*random.random()
 		body.angle = 2*math.pi*random.random()
+
 		self.space.add(body, front_physical, back_physical, back_sensor)
 		player = Player(socket_sid, self, body)
 		self.players.append(player)
@@ -144,12 +164,11 @@ class GameRoom:
 
 	def removePlayer(self, sid):
 		for p in self.players:
-			if p.socket_id == sid:
-				for s in p.body.shapes:
-					self.space.remove(s)
-				self.space.remove(p.body)
+			if p.sid == sid:
+				self.space.remove(p.body, *p.body.shapes)
 				self.players.remove(p)
 				return
+
 
 def offsetBox(cx, cy, length, width):
 	hl = length / 2
@@ -160,6 +179,12 @@ def offsetBox(cx, cy, length, width):
 	y2 = float(cy + hw)
 	return [(x1, y1), (x1, y2), (x2, y2), (x2, y1)]
 
+
+app = Flask(__name__)
+
+players = []
+
+room = None
 
 @app.route('/')
 def index():
@@ -185,7 +210,8 @@ def on_disconnect():
 @socketio.on('direction')
 def on_direction(data):
 	player = room.player_by_sid(request.sid)
-	player.rotation = data['angle']
+	if player.living:
+		player.rotation = data['angle']
 
 @socketio.on('boost')
 def on_boost(data):
@@ -195,7 +221,6 @@ def on_boost(data):
 
 @socketio.on('brake')
 def on_brake(data):
-	print(data['brake'])
 	player = room.player_by_sid(request.sid)
 	player.braking = data['brake']
 
@@ -203,7 +228,7 @@ if __name__ == '__main__':
 	room = GameRoom([])
 	webserver = threading.Thread(target=lambda: socketio.run(app, host='0.0.0.0'))
 	webserver.start()
-	room.init_borders()
+	room.init()
 	while True:
 		room.update(0.05, socketio)
 		time.sleep(0.05)
