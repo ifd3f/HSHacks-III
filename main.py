@@ -15,13 +15,13 @@ players = []
 
 room = None
 
-BOOST_DURATION = 2
-BOOST_COOLDOWN = 7
-BOOST_FORCE = 100.0
-NORMAL_FORCE = 50.0
-BRAKE_FRICTION = 100
+BOOST_DURATION = 1.5
+BOOST_COOLDOWN = 5
+BOOST_FORCE = 50.0
+NORMAL_FORCE = 25.0
 FRICTION = 20
 BOOST_MAX_SPEED = 600
+BRAKE_MAX_SPEED = 100
 MAX_SPEED = 250.0
 MIN_SPEED = 5
 PLAYER_MASS = 1.0
@@ -45,6 +45,12 @@ class Player:
 
 	def is_boosting(self):
 		return self.began_boost + BOOST_DURATION > time.time()
+
+	def get_percent(self):
+		if self.is_boosting():
+			return 1 - min(1, (time.time() - self.began_boost) / BOOST_DURATION)
+		else:
+			return min(1, (time.time() - (self.began_boost + BOOST_DURATION)) / BOOST_COOLDOWN)
 
 	@property
 	def rotation(self):
@@ -76,6 +82,7 @@ class GameRoom:
 		for p in self.players:
 			force = (BOOST_FORCE if p.is_boosting() else NORMAL_FORCE) * Vec2d.unit()
 			force.angle = p.rotation
+			print(p.body.velocity.get_length())
 			p.body.velocity += force/p.body.mass
 			p.body.angular_velocity = 0
 
@@ -83,14 +90,20 @@ class GameRoom:
 			speed = body.velocity.get_length()
 			if speed > 0:
 				fricDir = -body.velocity.normalized()
-				fricAmount = body.mass * (BRAKE_FRICTION if p.braking else FRICTION)
+				fricAmount = body.mass * FRICTION
 				frictionForce = fricDir * fricAmount * dt
 				if speed < MIN_SPEED:
 					body.velocity = Vec2d.zero()
 				else:
 					body.velocity += frictionForce/body.mass
 			if body.velocity.get_length() > MAX_SPEED:
-				body.velocity = (BOOST_MAX_SPEED if body.player.is_boosting() else MAX_SPEED) * body.velocity.normalized()
+				if body.player.is_boosting():
+					max_speed = BOOST_MAX_SPEED
+				elif body.player.braking:
+					max_speed = BRAKE_MAX_SPEED
+				else:
+					max_speed = MAX_SPEED
+				body.velocity = max_speed * body.velocity.normalized()
 
 		self.space.step(dt)
 		socketio.emit('entities', self.getEncodedPositions(), callback=lambda: print('asdf'))
@@ -103,7 +116,7 @@ class GameRoom:
 				'y': player.get_pos().y,
 				'direction': player.rotation,
 				'isBoosting': player.is_boosting(),
-				'boostRemaining': time.time() - player.began_boost,
+				'boostRemaining': player.get_percent(),
 				'color': 'red'
 			} for player in self.players
 		]
@@ -182,8 +195,9 @@ def on_boost(data):
 
 @socketio.on('brake')
 def on_brake(data):
-	pass
-
+	print(data['brake'])
+	player = room.player_by_sid(request.sid)
+	player.braking = data['brake']
 
 if __name__ == '__main__':
 	room = GameRoom([])

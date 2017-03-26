@@ -100,7 +100,7 @@
 				ctx.restore();
 			}
 
-			function drawBoostLevel() {
+			function drawBoostLevel(percent) {
 				var borderWidth = 7;
 
 				boostCtx.fillStyle = "gray";
@@ -108,7 +108,7 @@
 
 				var maxBoostHeight = boostCtx.canvas.height - borderWidth*2;
 				var boostWidth = boostCtx.canvas.width - borderWidth*2;
-				var boostHeight = boost/maxBoost * maxBoostHeight;
+				var boostHeight = percent * maxBoostHeight;
 
 				boostCtx.fillStyle = "yellow";
 				boostCtx.fillRect(borderWidth, borderWidth + (maxBoostHeight - boostHeight), boostWidth, boostHeight);
@@ -182,7 +182,7 @@
 						playerY = ent.y;
 
 						playerRot = ent.direction;
-						playerBoost = ent.boost;
+						playerBoost = ent.boostRemaining;
 						isBoosting = ent.isBoosting;
 
 					} else {
@@ -216,7 +216,7 @@
 
 				drawCharacter(playerX, playerY, playerRot, "black"); //yourself
 
-				drawBoostLevel();
+				drawBoostLevel(playerBoost);
 				if (isBoosting) {
 					drawBoost(playerX, playerY, playerRot);
 				}
