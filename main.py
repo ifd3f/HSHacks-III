@@ -71,6 +71,7 @@ class GameRoom:
 	
 	def update(self, dt, socketio):
 		#self.space.step(dt)
+		print('asdfasdfasdf')
 		socketio.emit('entities', self.getEncodedPositions(), callback=lambda: print('asdf'))
 
 	def getEncodedPositions(self):
@@ -129,6 +130,9 @@ def index():
 def game():
 	return render_template('game.html')
 
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.interval import IntervalTrigger
+
 socketio = SocketIO(app)
 
 @socketio.on('connect')
@@ -157,14 +161,9 @@ def on_boost(data):
 
 if __name__ == '__main__':
 	room = GameRoom([])
-	def game_update_loop():
-		while True:
-			room.update(0.05, socketio)
-			print('asdf')
-			time.sleep(1)
-	game_updater = threading.Thread(target=game_update_loop)
-	web_server = threading.Thread(target=lambda: socketio.run(app, host='0.0.0.0'))
-	web_server.start()
-	game_updater.start()
-	#web_server.join()
-	
+	webserver = threading.Thread(target=lambda: socketio.run(app, host='0.0.0.0'))
+	webserver.start()
+	while True:
+		print('asdf')
+		room.update(0.05, socketio)
+		time.sleep(1)

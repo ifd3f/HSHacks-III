@@ -1,2 +1,4 @@
+apscheduler==3.3.1
 flask==0.12
 flask-socketio==2.8.6
+pymunk==5.0.0
