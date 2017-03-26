@@ -10,7 +10,10 @@ import pymunk
 from pymunk.vec2d import Vec2d
 
 
-TIMEOUT = 3
+# How long between pings before a player is considered disconnected
+TIMEOUT = 10 # NYI
+
+# Physics parameters
 BOOST_DURATION = 1.5
 BOOST_COOLDOWN = 5
 BOOST_FORCE = 50.0
@@ -22,9 +25,15 @@ MAX_SPEED = 250.0
 MIN_SPEED = 5
 PLAYER_MASS = 1.0
 
+# Dimensions
 ARENA_WIDTH = 1000
 ARENA_HEIGHT = 500
 ARENA_THICKNESS = 100
+
+TRUCK_PLOW_WIDTH = 30
+TRUCK_PLOW_LENGTH = 15
+TRUCK_BODY_WIDTH = 15
+TRUCK_BODY_LENGTH = 30
 
 # Collision detection types
 TRUCK_PLOW_TYPE = 100
@@ -48,7 +57,7 @@ class Player:
 	def is_boosting(self):
 		return self.began_boost + BOOST_DURATION > time.time()
 
-	def get_percent(self):
+	def get_boost_level(self):
 		if self.is_boosting():
 			return 1 - min(1, (time.time() - self.began_boost) / BOOST_DURATION)
 		else:
@@ -130,7 +139,7 @@ class GameRoom:
 				'living': player.living,
 				'direction': player.rotation,
 				'isBoosting': player.is_boosting(),
-				'boostRemaining': player.get_percent(),
+				'boostLevel': player.get_boost_level(),
 			} for player in self.players
 		]
 
@@ -144,21 +153,18 @@ class GameRoom:
 
 		body = pymunk.Body(PLAYER_MASS, 1666)
 
-		front_physical = pymunk.Poly(body, offsetBox(5, 0, 10, 20), radius=5.0)
+		front_physical = pymunk.Poly(body, offsetBox(TRUCK_PLOW_LENGTH/2, 0, TRUCK_PLOW_LENGTH, TRUCK_PLOW_WIDTH), radius=5.0)
 		front_physical.elasticity = 1.5
 		front_physical.collision_type = TRUCK_PLOW_TYPE
 
-		back_physical = pymunk.Poly(body, offsetBox(-15, 0, 30, 20), radius=5.0)
+		back_physical = pymunk.Poly(body, offsetBox(-TRUCK_BODY_LENGTH/2, 0, TRUCK_BODY_LENGTH, TRUCK_BODY_WIDTH), radius=5.0)
 		back_physical.elasticity = 5.0
 		back_physical.collision_type = TRUCK_CORE_TYPE
-
-		back_sensor = pymunk.Poly(body, offsetBox(-15, 0, 40, 30), radius=5.0) 
-		back_sensor.sensor = True
 
 		body.position = ARENA_WIDTH*random.random(), ARENA_HEIGHT*random.random()
 		body.angle = 2*math.pi*random.random()
 
-		self.space.add(body, front_physical, back_physical, back_sensor)
+		self.space.add(body, front_physical, back_physical)
 		player = Player(socket_sid, self, body)
 		self.players.append(player)
 		body.player = player

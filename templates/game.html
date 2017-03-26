@@ -32,8 +32,10 @@
 			const ARENA_HEIGHT = 500;
 			const ARENA_THICKNESS = 10;
 
-			var playerR = 10;
-			var playerHeight = 30;
+			var plowWidth = 30;
+			var plowLength = 15;
+			var truckWidth = 15;
+			var truckLength = 30;
 
 			var thisId;
 			var thisPlayer = {
@@ -66,14 +68,9 @@
 				ctx.rotate( angle ); 
 				ctx.translate(-centerX, -centerY);
 
-				ctx.beginPath();
-				ctx.arc(centerX, centerY, playerR, Math.PI/2, -Math.PI/2, true);
-				ctx.lineTo(centerX - playerHeight, centerY - playerR);
-				ctx.lineTo(centerX - playerHeight, centerY + playerR);
-				ctx.closePath();
-
 				ctx.fillStyle = color;
-				ctx.fill();
+				ctx.fillRect(centerX - truckLength, centerY - truckWidth/2, truckLength, truckWidth); // Body
+				ctx.fillRect(centerX, centerY - plowWidth/2, plowLength, plowWidth); // Plow
 
 				ctx.restore();
 			}
@@ -90,9 +87,9 @@
 				ctx.translate(-playerX, -playerY);
 
 				ctx.beginPath();
-				ctx.moveTo(playerX - playerHeight, playerY);
-				ctx.lineTo(playerX - playerHeight - boostHeight, playerY + boostWidth / 2);
-				ctx.lineTo(playerX - playerHeight - boostHeight, playerY - boostWidth / 2);
+				ctx.moveTo(playerX - truckLength, playerY);
+				ctx.lineTo(playerX - truckLength - boostHeight, playerY + boostWidth / 2);
+				ctx.lineTo(playerX - truckLength - boostHeight, playerY - boostWidth / 2);
 				ctx.closePath();
 
 				ctx.fillStyle = "yellow";
@@ -186,7 +183,6 @@
 				for (var i in allPlayers) {
 					var ent = allPlayers[i];
 					var color;
-					console.log(ent.living);
 					if (!ent.living) {
 						color = 'black';
 					} else if (ent.id == thisId) {
@@ -194,14 +190,14 @@
 					} else {
 						color = 'red';
 					}
-					console.log(color);
 					drawCharacter(ent.x, ent.y, ent.direction, color);
 					if (ent.isBoosting) {
 						drawBoost(ent.x, ent.y, ent.direction);
 					}
 				}
 
-				drawBoostLevel(thisPlayer.boostRemaining);
+				drawBoostLevel(thisPlayer.boostLevel);
+				console.log(thisPlayer.boostLevel);
 
 				socket.emit('ping');
 
