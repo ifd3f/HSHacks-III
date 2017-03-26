@@ -152,28 +152,28 @@
 
 			}
 
-			socket.on("clients", function (data) { //{clients: [{}, {}, {}]}      each client: {x: y: direction: color: playerBoost: isBoosting: id:}
-				var clients = data.clients;
+			socket.on("entities", function (data) { //{clients: [{}, {}, {}]}      each client: {x: y: direction: color: playerBoost: isBoosting: id:}
+				console.log(data);
+				var entities = data;
 
-				for (var i = 0; i < clients.length; i++) {
-					var client = clients[i];
+				for (var ent in entities) {
 
-					if (client.id == id) {
+					if (ent.id == id) {
 
-						playerX = client.x;
-						playerY = client.y;
-						rotation = client.rotation;
-						playerBoost = client.boost;
-						isBoosting = client.isBoosting;
+						playerX = ent.x;
+						playerY = ent.y;
+						rotation = ent.rotation;
+						playerBoost = ent.boost;
+						isBoosting = ent.isBoosting;
 
 					} else {
 
-						var player = adjustedOpponent(client.x, client.y);
+						var player = adjustedOpponent(ent.x, ent.y);
 
 						if (player != null) {
-							drawCharacter(player.x, player.y, client.direction, client.color);
-							if (client.isBoosting) {
-								drawBoost(player.x, player.y, client.direction);
+							drawCharacter(player.x, player.y, ent.direction, ent.color);
+							if (ent.isBoosting) {
+								drawBoost(player.x, player.y, ent.direction);
 							}
 
 						}
@@ -190,6 +190,10 @@
 			socket.on("hello", function (data) {
 				id = data.id;
 			});
+
+			socket.on('asdf', function() {
+				console.log('fasdafsdasdf');
+			})
 
 			function draw() {
 				ctx.clearRect(0, 0, canvas.width, canvas.height);
