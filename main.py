@@ -141,7 +141,7 @@ class GameRoom:
 
 		self.space.step(dt)
 
-		socketio.emit('entities', self.getEncodedPositions())
+		socketio.emit('entities', self.getEncodedPositions(), namespace='/game')
 
 	def getEncodedPositions(self):
 		return [
@@ -216,35 +216,35 @@ def game():
 
 socketio = SocketIO(app)
 
-@socketio.on('connect')
+@socketio.on('connect', namespace='/game')
 def on_connect():
 	sid = request.sid
 	room.createPlayer(sid)
 	emit('hello', {'id': sid})
 
-@socketio.on('disconnect')
+@socketio.on('disconnect', namespace='/game')
 def on_disconnect():
 	sid = request.sid
 	room.removePlayer(sid)
 
-@socketio.on('direction')
+@socketio.on('direction', namespace='/game')
 def on_direction(data):
 	player = room.player_by_sid(request.sid)
 	if player.living:
 		player.rotation = data['angle']
 
-@socketio.on('boost')
+@socketio.on('boost', namespace='/game')
 def on_boost(data):
 	player = room.player_by_sid(request.sid)
 	if time.time() - player.began_boost > BOOST_COOLDOWN:
 		player.began_boost = time.time()
 
-@socketio.on('brake')
+@socketio.on('brake', namespace='/game')
 def on_brake(data):
 	player = room.player_by_sid(request.sid)
 	player.braking = data['brake']
 
-@socketio.on('ping')
+@socketio.on('ping', namespace='/game')
 def on_ping(data):
 	print('pong')
 	pass

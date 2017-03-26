@@ -144,7 +144,7 @@
 				return player;
 			}
 
-			var socket = io();
+			var socket = io('/game');
 
 			socket.on("entities", function (data) { 
 				allPlayers = data;
