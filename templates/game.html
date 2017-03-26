@@ -115,6 +115,7 @@
 				var relativeY = event.pageY - canvas.height/2;
 
 				var angle = Math.atan2(relativeY, relativeX);
+				console.log(angle)
 				socket.emit("direction", {angle: angle});
 			})
 
@@ -169,9 +170,8 @@
 						playerX = ent.x;
 
 						playerY = ent.y;
-						console.log(playerY);
 
-						playerRot = ent.direction - Msth.PI/2;
+						playerRot = ent.direction;
 						playerBoost = ent.boost;
 						isBoosting = ent.isBoosting;
 

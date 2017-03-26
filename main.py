@@ -18,7 +18,9 @@ room = None
 BOOST_FORCE = 200.0
 NORMAL_FORCE = 50.0
 BRAKE_FRICTION = 0.1
-MAX_SPEED = 1000.0
+FRICTION = 0
+MAX_SPEED = 10.0
+MIN_SPEED = 2
 PLAYER_MASS = 1.0
 
 
@@ -80,9 +82,20 @@ class GameRoom:
 		for p in self.players:
 			force = NORMAL_FORCE * Vec2d.unit()
 			force.angle = p.rotation
-			print(force)
+			print(p.rotation)
 			p.body.apply_force_at_local_point(force, (0, 0))
 		for body in self.space.bodies:
+			speed = body.velocity.get_length()
+			if speed > 0:
+				fricDir = -body.velocity.normalized()
+				fricAmount = body.mass * FRICTION
+				frictionForce = fricDir * fricAmount * dt
+				if speed < MIN_SPEED:
+					body.velocity = Vec2d.zero()
+
+				else:
+					body.apply_force_at_local_point(frictionForce, (0,0))
+
 			if body.velocity.get_length() > MAX_SPEED:
 				body.velocity = MAX_SPEED * body.velocity.normalized()
 		self.space.step(dt)
@@ -170,7 +183,6 @@ def on_direction(data):
 
 @socketio.on('boost')
 def on_boost(data):
-	print(data)
 	send('asdf')
 
 @socketio.on('brake')
