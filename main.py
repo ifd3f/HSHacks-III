@@ -48,9 +48,11 @@ TRUCK_BODY_LENGTH = 30
 # Collision detection types
 TRUCK_PLOW_TYPE = 100
 TRUCK_CORE_TYPE = 101
+ARENA_BORDER_TYPE = 102
+DEAD_BODY_TYPE = 103
 
 # Matchmaking Parameters
-PEOPLE_PER_GAME = 2 # TODO: CHANGE THIS BACK WHEN DONE DEBUGGING
+PEOPLE_PER_GAME = 3 # TODO: CHANGE THIS BACK WHEN DONE DEBUGGING
 ROOM_NAME_LENGTH = 16
 TOKEN_LENGTH = 8
 
@@ -98,25 +100,39 @@ class GameRoom:
 	def init(self):
 		
 		# Create collision handler
-		# Between a plow and a truck body
+		## Between a plow and a truck body
 		pb_handler = self.space.add_collision_handler(TRUCK_PLOW_TYPE, TRUCK_CORE_TYPE)
-		def pre_solve(arbiter, space, data): 
+		db_handler = self.space.add_collision_handler(DEAD_BODY_TYPE, TRUCK_CORE_TYPE)
+		def kill_pre_solve(arbiter, space, data): 
 			plow, truck = arbiter.shapes 	 # Extract the shapes
+			for s in truck.body.shapes:
+				s.collision_type = DEAD_BODY_TYPE
 			if truck.body.player.living:	 # If he is alive
 				truck.body.player.living = False # Kill the guy that got t-boned
 				socketio.emit('death', {}, namespace='/game', room=truck.body.player.sid) # And tell him he died
 			return True # Then let his body fly across the map stupidly fast
+		pb_handler.pre_solve = kill_pre_solve
+		db_handler.pre_solve = kill_pre_solve
 
-		pb_handler.pre_solve = pre_solve
+		## Between the arena and a dead player
+		ad_handler = self.space.add_collision_handler(ARENA_BORDER_TYPE, DEAD_BODY_TYPE)
+		def ad_pre_solve(arbiter, space, data):
+			arbiter.restitution = 0.1 # Dead players shouldn't be flying around that fast...
+			return True
+		ad_handler.pre_solve = ad_pre_solve
+
 
 		# Create borders
 		body = pymunk.Body(body_type=pymunk.Body.STATIC)
 		shapes = [
-			pymunk.Poly(body, offsetBox(ARENA_WIDTH/2, 						-ARENA_THICKNESS/2, 					ARENA_WIDTH + 2*ARENA_THICKNESS, 	ARENA_THICKNESS)),
-			pymunk.Poly(body, offsetBox(ARENA_WIDTH/2, 						ARENA_HEIGHT + ARENA_THICKNESS, 		ARENA_WIDTH + 2*ARENA_THICKNESS, 	ARENA_THICKNESS)),
-			pymunk.Poly(body, offsetBox(-ARENA_THICKNESS/2, 				ARENA_HEIGHT/2, 						ARENA_THICKNESS, 					ARENA_HEIGHT + 2*ARENA_THICKNESS)),
-			pymunk.Poly(body, offsetBox(ARENA_WIDTH + ARENA_THICKNESS/2,	ARENA_HEIGHT/2 + ARENA_THICKNESS/2, 	ARENA_THICKNESS, 					ARENA_HEIGHT + 2*ARENA_THICKNESS))			
+			pymunk.Poly(body, offsetBox(ARENA_WIDTH/2 ,						-ARENA_THICKNESS/2,	 				ARENA_WIDTH + 2*ARENA_THICKNESS, 	ARENA_THICKNESS)),
+			pymunk.Poly(body, offsetBox(ARENA_WIDTH/2 ,						ARENA_HEIGHT + 3*ARENA_THICKNESS/4, ARENA_WIDTH + 2*ARENA_THICKNESS, 	ARENA_THICKNESS)),
+			pymunk.Poly(body, offsetBox(-ARENA_THICKNESS/2,					ARENA_HEIGHT/2,						ARENA_THICKNESS, 					ARENA_HEIGHT + 2*ARENA_THICKNESS)),
+			pymunk.Poly(body, offsetBox(ARENA_WIDTH + 3*ARENA_THICKNESS/4,	ARENA_HEIGHT/2,						ARENA_THICKNESS, 					ARENA_HEIGHT + 2*ARENA_THICKNESS))			
 		]
+		for s in shapes:
+			s.elasticity = 0.8
+			s.collision_type = ARENA_BORDER_TYPE
 		self.space.add(body, *shapes)
 
 	def update(self, dt, socketio):
@@ -304,6 +320,10 @@ def on_brake(data):
 
 @socketio.on('ping', namespace='/game')
 def on_ping(data):
+	pass
+
+@socketio.on('ping', namespace='/lobby')
+def on_lobby_ping(data):
 	pass
 
 @socketio.on('search', namespace='/lobby')
