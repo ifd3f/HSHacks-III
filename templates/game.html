@@ -167,9 +167,10 @@
 				}
 			});
 
-			socket.on("death", function (data) {
+			socket.on("death", function(data) {
 				clearInterval(loop);
 				document.write("gg m8");
+				console.log('ded');
 			})
 
 			function draw() {
@@ -204,7 +205,7 @@
 
 				drawBoostLevel(thisPlayer.boostLevel);
 
-				socket.emit('ping');
+				socket.emit('ping', {});
 
 			}
 

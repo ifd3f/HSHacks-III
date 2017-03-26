@@ -39,7 +39,10 @@
 				console.log('Beginning search')
 				$('#lobby-btn').html('Stop Search');
 				socket.emit('search', {running: true});
-				pinger = setInterval(function() {socket.emit('ping', {})}, 2000);
+				pinger = setInterval(function() {
+					console.log('asdf');
+					socket.emit('ping', {});
+				}, 2000);
 			} else {
 				console.log('Stopping search')
 				$('#lobby-btn').html('Join Matchmaking');

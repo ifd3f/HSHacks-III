@@ -101,9 +101,9 @@ class GameRoom:
 		# Between a plow and a truck body
 		pb_handler = self.space.add_collision_handler(TRUCK_PLOW_TYPE, TRUCK_CORE_TYPE)
 		def pre_solve(arbiter, space, data): # Will only run if begin() was true
-			print('pb', arbiter.contact_point_set)
 			plow, truck = arbiter.shapes 	 # Extract the shapes
 			truck.body.player.living = False # Kill the guy that got t-boned
+			socketio.emit('death', {}, namespace='/game', room=truck.body.player.sid)
 			return True
 
 		pb_handler.pre_solve = pre_solve
@@ -228,7 +228,6 @@ def randomString(n):
 async def lobby_manager(socketio):
 	while True:  # Every 2 seconds
 		while len(searching) >= PEOPLE_PER_GAME:  # If there are enough people for a game
-			print('Enough people')
 			room = GameRoom()	# Create a new room
 			rooms[room.room_name] = room
 			for _ in range(0, PEOPLE_PER_GAME): # For each person
@@ -280,7 +279,6 @@ def on_room_name(data):  # Initialize the room
 def on_disconnect():
 	sid = request.sid
 	room = client2room[sid]
-	room.removePlayer(sid)
 
 @socketio.on('direction', namespace='/game')
 def on_direction(data):
@@ -304,7 +302,6 @@ def on_brake(data):
 
 @socketio.on('ping', namespace='/game')
 def on_ping(data):
-	print('pong')
 	pass
 
 @socketio.on('search', namespace='/lobby')
