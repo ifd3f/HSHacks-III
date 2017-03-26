@@ -51,6 +51,12 @@
 
 			var boostCtx = document.getElementById("boostCanvas").getContext('2d');
 
+			var currentMousePos = { x: -1, y: -1 };
+		    $(document).mousemove(function(event) {
+		        currentMousePos.x = event.pageX;
+		        currentMousePos.y = event.pageY;
+		    });
+
 			function drawCharacter(centerX, centerY, angle, color) {
 
 				ctx.save();
@@ -203,8 +209,8 @@
 				canvas.width  = window.innerWidth-4;
 				canvas.height = window.innerHeight-4;
 
-				var relativeX = event.pageX - playerX
-				var relativeY = event.pageY - playerY;
+				var relativeX = currentMousePos.x - playerX
+				var relativeY = currentMousePos.y - playerY;
 
 				var angle = Math.atan2(relativeY, relativeX);
 				socket.emit("direction", {angle: angle});
