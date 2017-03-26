@@ -58,7 +58,7 @@ class GameRoom:
 		for p in self.players:
 			force = NORMAL_FORCE * Vec2d.unit()
 			force.angle = p.rotation
-			p.body.apply_force_at_local_point(force, p.body.center_of_gravity)
+			p.body.velocity += force/p.body.mass
 
 		for body in self.space.bodies:
 			speed = body.velocity.get_length()
@@ -71,7 +71,7 @@ class GameRoom:
 				if speed < MIN_SPEED:
 					body.velocity = Vec2d.zero()
 				else:
-					body.apply_force_at_local_point(frictionForce, body.center_of_gravity)
+					body.velocity += frictionForce/body.mass
 			if body.velocity.get_length() > MAX_SPEED:
 				body.velocity = MAX_SPEED * body.velocity.normalized()
 
