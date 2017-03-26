@@ -60,8 +60,13 @@ class Player:
 	def get_pos(self):
 		return self.body.position
 
-	def get_rot(self):
+	@property
+	def rotation(self):
 		return self.body.angle
+
+	@rotation.setter
+	def rotation(self, val):
+		self.body.angle = val
 
 class GameRoom:
 	
@@ -80,16 +85,17 @@ class GameRoom:
 				'id': player.socket_id,
 				'x': player.get_pos().x,
 				'y': player.get_pos().y,
-				'direction': player.get_rot(),
+				'direction': player.rotation,
 				'isBoosting': player.boosting,
-				'boostRemaining': player.boost_left
+				'boostRemaining': player.boost_left,
+				'color': 'red'
 			} for player in self.players
 		]
 
 	def player_by_sid(self, sid):
 		for p in self.players:
 			if p.socket_id == sid:
-				return sid
+				return p
 		return None
 
 	def createPlayer(self, socket_sid):
@@ -101,6 +107,7 @@ class GameRoom:
 		back_sensor = pymunk.Poly(body, offsetBox(0, 0, 70, 100), radius=5.0) 
 		back_sensor.contact = True
 		body.position = 100*random.random(), 100*random.random()
+		body.angle = 2*math.pi*random.random()
 		self.space.add(body, front_physical, back_physical, back_sensor)
 		self.players.append(Player(socket_sid, self, body))
 
@@ -149,7 +156,8 @@ def on_disconnect():
 
 @socketio.on('direction')
 def on_direction(data):
-	pass
+	player = room.player_by_sid(request.sid)
+	player.rotation = data['angle'] + math.pi/2
 
 @socketio.on('boost')
 def on_boost(data):
