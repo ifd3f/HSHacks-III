@@ -126,15 +126,6 @@
 				ctx.strokeRect(wallThickness/2, wallThickness/2, arenaWidth + wallThickness*2, arenaHeight + wallThickness*2);
 			}
 
-			$(document).mousemove(function(event) {
-				var relativeX = event.pageX - playerX
-				var relativeY = event.pageY - playerY;
-
-				var angle = Math.atan2(relativeY, relativeX);
-				console.log(angle)
-				socket.emit("direction", {angle: angle});
-			})
-
 			$(document).mousedown(function(event) {
     			switch (event.which) {
 					case 1:
@@ -211,6 +202,12 @@
 
 				canvas.width  = window.innerWidth-4;
 				canvas.height = window.innerHeight-4;
+
+				var relativeX = event.pageX - playerX
+				var relativeY = event.pageY - playerY;
+
+				var angle = Math.atan2(relativeY, relativeX);
+				socket.emit("direction", {angle: angle});
 
 				drawBackground();
 
