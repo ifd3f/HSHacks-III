@@ -14,15 +14,21 @@ from pymunk.vec2d import Vec2d
 TIMEOUT = 10 # NYI
 
 # Physics parameters
+UPDATE_PERIOD = 0.025
 BOOST_DURATION = 1.5
 BOOST_COOLDOWN = 5
+
 BOOST_FORCE = 50.0
 NORMAL_FORCE = 25.0
+
 FRICTION = 20
+
 BOOST_MAX_SPEED = 600
 BRAKE_MAX_SPEED = 100
+DEAD_MAX_SPEED = 1500
 MAX_SPEED = 250.0
 MIN_SPEED = 5
+
 PLAYER_MASS = 1.0
 
 # Dimensions
@@ -31,8 +37,9 @@ ARENA_HEIGHT = 500
 ARENA_THICKNESS = 100
 
 TRUCK_PLOW_WIDTH = 30
-TRUCK_PLOW_LENGTH = 15
-TRUCK_BODY_WIDTH = 15
+TRUCK_PLOW_LENGTH = 20
+TRUCK_BODY_SPACING = 0 	# How much empty space between the plow and the body
+TRUCK_BODY_WIDTH = 10
 TRUCK_BODY_LENGTH = 30
 
 # Collision detection types
@@ -82,12 +89,15 @@ class GameRoom:
 	def init(self):
 		
 		# Create collision handler
-		handler = self.space.add_collision_handler(TRUCK_PLOW_TYPE, TRUCK_CORE_TYPE)
-		def begin(arbiter, space, data):
-			plow, truck = arbiter.shapes # Between a plow and the core
-			truck.body.player.living = False
+		# Between a plow and a truck body
+		pb_handler = self.space.add_collision_handler(TRUCK_PLOW_TYPE, TRUCK_CORE_TYPE)
+		def pre_solve(arbiter, space, data): # Will only run if begin() was true
+			print('pb', arbiter.contact_point_set)
+			plow, truck = arbiter.shapes 	 # Extract the shapes
+			truck.body.player.living = False # Kill the guy that got t-boned
 			return True
-		handler.begin = begin
+
+		pb_handler.pre_solve = pre_solve
 
 		# Create borders
 		body = pymunk.Body(body_type=pymunk.Body.STATIC)
@@ -119,7 +129,9 @@ class GameRoom:
 				else:
 					body.velocity += frictionForce/body.mass
 			if body.velocity.get_length() > MAX_SPEED:
-				if body.player.is_boosting():
+				if not body.player.living:
+					max_speed = DEAD_MAX_SPEED
+				elif body.player.is_boosting():
 					max_speed = BOOST_MAX_SPEED
 				elif body.player.braking:
 					max_speed = BRAKE_MAX_SPEED
@@ -128,6 +140,7 @@ class GameRoom:
 				body.velocity = max_speed * body.velocity.normalized()
 
 		self.space.step(dt)
+
 		socketio.emit('entities', self.getEncodedPositions())
 
 	def getEncodedPositions(self):
@@ -153,11 +166,11 @@ class GameRoom:
 
 		body = pymunk.Body(PLAYER_MASS, 1666)
 
-		front_physical = pymunk.Poly(body, offsetBox(TRUCK_PLOW_LENGTH/2, 0, TRUCK_PLOW_LENGTH, TRUCK_PLOW_WIDTH), radius=5.0)
+		front_physical = pymunk.Poly(body, offsetBox(TRUCK_PLOW_LENGTH/2 - TRUCK_BODY_SPACING/2, 0, TRUCK_PLOW_LENGTH, TRUCK_PLOW_WIDTH), radius=2.0)
 		front_physical.elasticity = 1.5
 		front_physical.collision_type = TRUCK_PLOW_TYPE
 
-		back_physical = pymunk.Poly(body, offsetBox(-TRUCK_BODY_LENGTH/2, 0, TRUCK_BODY_LENGTH, TRUCK_BODY_WIDTH), radius=5.0)
+		back_physical = pymunk.Poly(body, offsetBox(-TRUCK_BODY_LENGTH/2 - TRUCK_BODY_SPACING/2, 0, TRUCK_BODY_LENGTH - TRUCK_BODY_SPACING, TRUCK_BODY_WIDTH), radius=2.0)
 		back_physical.elasticity = 5.0
 		back_physical.collision_type = TRUCK_CORE_TYPE
 
@@ -242,5 +255,5 @@ if __name__ == '__main__':
 	webserver.start()
 	room.init()
 	while True:
-		room.update(0.05, socketio)
-		time.sleep(0.05)
+		room.update(UPDATE_PERIOD, socketio)
+		time.sleep(UPDATE_PERIOD)
