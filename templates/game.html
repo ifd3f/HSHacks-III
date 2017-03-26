@@ -26,11 +26,15 @@
 		<canvas id="boostCanvas" width="50" height="200"></canvas>
 
 		<script type="text/javascript">	
-			var playerR = 5;
-			var playerHeight = 18;
+			var playerR = 10;
+			var playerHeight = 30;
 			var socket = io();
 
 			var id;
+
+			var arenaWidth = 1600;
+			var arenaHeight = 900;
+			var wallThickness = 10;
 
 			var playerX = 0;
 			var playerY = 0;
@@ -69,8 +73,8 @@
 
 			function drawBoost(playerX, playerY, playerRot) {
 
-				boostWidth = 5;
-				boostHeight = 10;
+				boostWidth = 7;
+				boostHeight = 18;
 
 				ctx.save();
 
@@ -107,7 +111,7 @@
 			var distanceBetweenDots = 75;
 
 			function drawBackground() {
-				for (var i = 0; i < canvas.width/distanceBetweenDots + 1; i++) {
+				/*for (var i = 0; i < canvas.width/distanceBetweenDots + 1; i++) {
 					for (var j = 0; j < canvas.height/distanceBetweenDots + 1; j++) {
 						var x = i * distanceBetweenDots - playerX % distanceBetweenDots
 						var y = j * distanceBetweenDots - playerY % distanceBetweenDots;
@@ -115,7 +119,11 @@
 						ctx.fillStyle = "gray";
 						ctx.fillRect(x, y, 5, 5);
 					}
-				}
+				}*/
+
+				ctx.strokeStyle = "black";
+				ctx.lineWidth = wallThickness;
+				ctx.strokeRect(wallThickness/2, wallThickness/2, arenaWidth + wallThickness*2, arenaHeight + wallThickness*2);
 			}
 
 			$(document).mousemove(function(event) {
