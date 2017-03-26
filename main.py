@@ -23,6 +23,9 @@ MAX_SPEED = 250.0
 MIN_SPEED = 5
 PLAYER_MASS = 1.0
 
+ARENA_WIDTH = 1600
+ARENA_HEIGHT = 900
+ARENA_THICKNESS = 10
 
 class Player:
 
@@ -52,7 +55,17 @@ class GameRoom:
 		super(GameRoom, self).__init__()
 		self.players = players[:]
 		self.space = pymunk.Space()
-	
+
+	def init_borders(self):
+		body = pymunk.Body(body_type=Body.STATIC)
+		shapes = [
+			pymunk.Poly(body, offsetBox(ARENA_WIDTH/2, 		-ARENA_THICKNESS/2, 				ARENA_WIDTH + 2*ARENA_THICKNESS, ARENA_THICKNESS)),
+			pymunk.Poly(body, offsetBox(ARENA_WIDTH/2, 		ARENA_HEIGHT + ARENA_THICKNESS/2, 	ARENA_WIDTH + 2*ARENA_THICKNESS, ARENA_THICKNESS)),
+			pymunk.Poly(body, offsetBox(-ARENA_THICKNESS/2, ARENA_HEIGHT/2, 					ARENA_THICKNESS, ARENA_HEIGHT + 2*ARENA_THICKNESS)),
+			pymunk.Poly(body, offsetBox(ARENA_WIDTH/2, 		-ARENA_THICKNESS/2, 				ARENA_THICKNESS, ARENA_HEIGHT + 2*ARENA_THICKNESS))			
+		]
+		self.space.add(body, *shapes)
+
 	def update(self, dt, socketio):
 
 		for p in self.players:
@@ -98,13 +111,13 @@ class GameRoom:
 
 	def createPlayer(self, socket_sid):
 		body = pymunk.Body(PLAYER_MASS, 1666)
-		front_physical = pymunk.Poly(body, offsetBox(15, 0, 30, 60), radius=5.0)
+		front_physical = pymunk.Poly(body, offsetBox(5, 0, 10, 20), radius=5.0)
 		front_physical.elasticity = 1.5
-		back_physical = pymunk.Poly(body, offsetBox(-45, 0, 90, 60), radius=5.0)
+		back_physical = pymunk.Poly(body, offsetBox(-15, 0, 30, 20), radius=5.0)
 		back_physical.elasticity = 3.0
-		back_sensor = pymunk.Poly(body, offsetBox(-45, 0, 100, 70), radius=5.0) 
+		back_sensor = pymunk.Poly(body, offsetBox(-15, 0, 34, 24), radius=5.0) 
 		back_sensor.contact = True
-		body.position = 100*random.random(), 100*random.random()
+		body.position = ARENA_WIDTH*random.random(), ARENA_HEIGHT*random.random()
 		body.angle = 2*math.pi*random.random()
 		self.space.add(body, front_physical, back_physical, back_sensor)
 		self.players.append(Player(socket_sid, self, body))
