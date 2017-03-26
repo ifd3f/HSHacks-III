@@ -15,10 +15,13 @@ players = []
 
 room = None
 
-BOOST_FORCE = 200.0
+BOOST_DURATION = 2
+BOOST_COOLDOWN = 7
+BOOST_FORCE = 100.0
 NORMAL_FORCE = 50.0
-BRAKE_FRICTION = 0.1
+BRAKE_FRICTION = 100
 FRICTION = 20
+BOOST_MAX_SPEED = 600
 MAX_SPEED = 250.0
 MIN_SPEED = 5
 PLAYER_MASS = 1.0
@@ -34,12 +37,14 @@ class Player:
 		self.room = room
 		self.body = body
 
-		self.boosting = False
-		self.boost_left = 3
+		self.began_boost = 0
 		self.braking = False
 
 	def get_pos(self):
 		return self.body.position
+
+	def is_boosting(self):
+		return self.began_boost + BOOST_DURATION > time.time()
 
 	@property
 	def rotation(self):
@@ -69,7 +74,7 @@ class GameRoom:
 	def update(self, dt, socketio):
 
 		for p in self.players:
-			force = NORMAL_FORCE * Vec2d.unit()
+			force = (BOOST_FORCE if p.is_boosting() else NORMAL_FORCE) * Vec2d.unit()
 			force.angle = p.rotation
 			p.body.velocity += force/p.body.mass
 			p.body.angular_velocity = 0
@@ -78,14 +83,14 @@ class GameRoom:
 			speed = body.velocity.get_length()
 			if speed > 0:
 				fricDir = -body.velocity.normalized()
-				fricAmount = body.mass * FRICTION
+				fricAmount = body.mass * (BRAKE_FRICTION if p.braking else FRICTION)
 				frictionForce = fricDir * fricAmount * dt
 				if speed < MIN_SPEED:
 					body.velocity = Vec2d.zero()
 				else:
 					body.velocity += frictionForce/body.mass
 			if body.velocity.get_length() > MAX_SPEED:
-				body.velocity = MAX_SPEED * body.velocity.normalized()
+				body.velocity = (BOOST_MAX_SPEED if body.player.is_boosting() else MAX_SPEED) * body.velocity.normalized()
 
 		self.space.step(dt)
 		socketio.emit('entities', self.getEncodedPositions(), callback=lambda: print('asdf'))
@@ -97,8 +102,8 @@ class GameRoom:
 				'x': player.get_pos().x,
 				'y': player.get_pos().y,
 				'direction': player.rotation,
-				'isBoosting': player.boosting,
-				'boostRemaining': player.boost_left,
+				'isBoosting': player.is_boosting(),
+				'boostRemaining': time.time() - player.began_boost,
 				'color': 'red'
 			} for player in self.players
 		]
@@ -120,7 +125,9 @@ class GameRoom:
 		body.position = ARENA_WIDTH*random.random(), ARENA_HEIGHT*random.random()
 		body.angle = 2*math.pi*random.random()
 		self.space.add(body, front_physical, back_physical, back_sensor)
-		self.players.append(Player(socket_sid, self, body))
+		player = Player(socket_sid, self, body)
+		self.players.append(player)
+		body.player = player
 
 	def removePlayer(self, sid):
 		for p in self.players:
@@ -149,9 +156,6 @@ def index():
 def game():
 	return render_template('game.html')
 
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.interval import IntervalTrigger
-
 socketio = SocketIO(app)
 
 @socketio.on('connect')
@@ -172,10 +176,12 @@ def on_direction(data):
 
 @socketio.on('boost')
 def on_boost(data):
-	send('asdf')
+	player = room.player_by_sid(request.sid)
+	if time.time() - player.began_boost > BOOST_COOLDOWN:
+		player.began_boost = time.time()
 
 @socketio.on('brake')
-def on_boost(data):
+def on_brake(data):
 	pass
 
 

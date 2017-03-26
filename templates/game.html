@@ -135,7 +135,7 @@
 			$(document).mousedown(function(event) {
     			switch (event.which) {
 					case 1:
-						socket.emit("boost", {boost: true});
+						socket.emit("boost", {});
 						break;
 					case 3:
 						socket.emit("brake", {brake: true});
@@ -145,9 +145,6 @@
 
 			$(document).mouseup(function(event) {
     			switch (event.which) {
-					case 1:
-						socket.emit("boost", {boost: false});
-						break;
 					case 3:
 						socket.emit("brake", {brake: false});
 						break;
