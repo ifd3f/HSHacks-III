@@ -52,7 +52,7 @@ ARENA_BORDER_TYPE = 102
 DEAD_BODY_TYPE = 103
 
 # Matchmaking Parameters
-PEOPLE_PER_GAME = 3 # TODO: CHANGE THIS BACK WHEN DONE DEBUGGING
+PEOPLE_PER_GAME = 4 # TODO: CHANGE THIS BACK WHEN DONE DEBUGGING
 ROOM_NAME_LENGTH = 16
 TOKEN_LENGTH = 8
 
@@ -244,6 +244,7 @@ def randomString(n):
 
 async def lobby_manager(socketio):
 	while True:  # Every 2 seconds
+		socketio.emit('ping', {}, namespace='/lobby')
 		while len(searching) >= PEOPLE_PER_GAME:  # If there are enough people for a game
 			room = GameRoom()	# Create a new room
 			rooms[room.room_name] = room

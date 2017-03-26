@@ -18,8 +18,8 @@
 <body>
 	<div class="jumbotron">
 		<div class="container">
-			<h1>Game name here</h1>
-			<p>This is a thing</p>
+			<h1>High Octane Elastic Snowploughs</h1>
+			<p>FFA. You are the blue player, and the red players are your enemies. Left click to boost, right click to brake, your player moves towards your mouse.</p>
 			<button id="lobby-btn" type="button" onClick="onButtonClicked()" class="btn btn-default btn-lg">Join Matchmaking</button>
 			<p id="people"></p>
 		</div>
@@ -39,16 +39,17 @@
 				console.log('Beginning search')
 				$('#lobby-btn').html('Stop Search');
 				socket.emit('search', {running: true});
+				/*
 				pinger = setInterval(function() {
-					console.log('asdf');
+					console.log('pinging server');
 					socket.emit('ping', {});
-				}, 2000);
+				}, 2000);*/
 			} else {
 				console.log('Stopping search')
 				$('#lobby-btn').html('Join Matchmaking');
 				$('#people').html('');
 				socket.emit('search', {running: false});
-				clearInterval(pinger)
+				//clearInterval(pinger);
 			}
 		}
 
@@ -63,6 +64,10 @@
 			$('#token-form input').val(data.token);  // Put the token into a hidden form
 			$('#token-form').submit();  // Submit the hidden form
 		});
+
+		socket.on('ping', function(data) {
+			console.log('pong');
+		})
 
 	</script>
 </body>
