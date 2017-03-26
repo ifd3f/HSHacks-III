@@ -79,7 +79,7 @@
 
 			function drawBoost(playerX, playerY, playerRot) {
 
-				boostWidth = 7;
+				boostWidth = 8;
 				boostHeight = 18;
 
 				ctx.save();
@@ -89,9 +89,9 @@
 				ctx.translate(-playerX, -playerY);
 
 				ctx.beginPath();
-				ctx.moveTo(playerX - boostWidth/2, playerY + playerHeight);
-				ctx.lineTo(playerX, playerY + playerHeight + boostHeight);
-				ctx.lineTo(playerX + boostWidth/2, playerY + playerHeight);
+				ctx.moveTo(playerX - playerHeight, playerY + borderWidth/2);
+				ctx.lineTo(playerX - playerHeight - boostHeight, playerY);
+				ctx.lineTo(playerX - playerHeight, playerY - borderWidth/2);
 				ctx.closePath();
 
 				ctx.fillStyle = "yellow";
