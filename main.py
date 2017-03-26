@@ -22,9 +22,9 @@ MAX_SPEED = 250.0
 MIN_SPEED = 5
 PLAYER_MASS = 1.0
 
-ARENA_WIDTH = 1400
-ARENA_HEIGHT = 700
-ARENA_THICKNESS = 10
+ARENA_WIDTH = 1000
+ARENA_HEIGHT = 500
+ARENA_THICKNESS = 100
 
 # Collision detection types
 TRUCK_PLOW_TYPE = 100
@@ -77,7 +77,7 @@ class GameRoom:
 		def begin(arbiter, space, data):
 			plow, truck = arbiter.shapes # Between a plow and the core
 			truck.body.player.living = False
-			return False
+			return True
 		handler.begin = begin
 
 		# Create borders
@@ -149,7 +149,7 @@ class GameRoom:
 		front_physical.collision_type = TRUCK_PLOW_TYPE
 
 		back_physical = pymunk.Poly(body, offsetBox(-15, 0, 30, 20), radius=5.0)
-		back_physical.elasticity = 3.0
+		back_physical.elasticity = 5.0
 		back_physical.collision_type = TRUCK_CORE_TYPE
 
 		back_sensor = pymunk.Poly(body, offsetBox(-15, 0, 40, 30), radius=5.0) 

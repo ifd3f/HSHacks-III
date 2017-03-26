@@ -22,12 +22,14 @@
 
 	</head>
 	<body oncontextmenu="return false;">
-		<canvas id="myCanvas"></canvas>
+		<div id="canvasdiv">
+			<canvas id="gameCanvas"></canvas>
+		</div>
 		<canvas id="boostCanvas" width="50" height="200"></canvas>
 
 		<script type="text/javascript">	
-			const ARENA_WIDTH = 1400;
-			const ARENA_HEIGHT = 700;
+			const ARENA_WIDTH = 1000;
+			const ARENA_HEIGHT = 500;
 			const ARENA_THICKNESS = 10;
 
 			var playerR = 10;
@@ -45,7 +47,7 @@
 
 			var allPlayers = [];
 
-			var canvas = document.getElementById("myCanvas");
+			var canvas = document.getElementById("gameCanvas");
 			var ctx = canvas.getContext('2d');
 
 			var boostCtx = document.getElementById("boostCanvas").getContext('2d');
