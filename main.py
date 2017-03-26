@@ -1,4 +1,5 @@
 import math
+import random
 import threading
 import time
 
@@ -99,6 +100,7 @@ class GameRoom:
 		back_physical.elasticity = 3.0
 		back_sensor = pymunk.Poly(body, offsetBox(0, 0, 70, 100), radius=5.0) 
 		back_sensor.contact = True
+		body.position = 100*random.random(), 100*random.random()
 		self.space.add(body, front_physical, back_physical, back_sensor)
 		self.players.append(Player(socket_sid, self, body))
 
@@ -138,6 +140,7 @@ socketio = SocketIO(app)
 def on_connect():
 	sid = request.sid
 	room.createPlayer(sid)
+	emit('hello', {'id': sid})
 
 @socketio.on('disconnect')
 def on_disconnect():
