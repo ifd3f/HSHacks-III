@@ -1,9 +1,11 @@
+import asyncio
 import math
 import random
 import string
 import threading
 import time
 
+import flask
 from flask import Flask, render_template, request
 from flask_socketio import SocketIO, emit, send
 
@@ -48,7 +50,9 @@ TRUCK_PLOW_TYPE = 100
 TRUCK_CORE_TYPE = 101
 
 # Matchmaking Parameters
-PEOPLE_PER_GAME = 6
+PEOPLE_PER_GAME = 2 # TODO: CHANGE THIS BACK WHEN DONE DEBUGGING
+ROOM_NAME_LENGTH = 16
+TOKEN_LENGTH = 8
 
 
 class Player:
@@ -85,10 +89,11 @@ class Player:
 
 class GameRoom:
 	
-	def __init__(self, players, room_name):
+	def __init__(self, players):
 		super(GameRoom, self).__init__()
 		self.players = players[:]
 		self.space = pymunk.Space()
+		self.room_name = randomString(ROOM_NAME_LENGTH)
 
 	def init(self):
 		
@@ -207,20 +212,36 @@ def offsetBox(cx, cy, length, width):
 def randomString(n):
 	return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(n))
 
+async def lobby_manager(socketio):
+	while True:  # Every 2 seconds
+		while len(searching) >= PEOPLE_PER_GAME:  # If there are enough people for a game
+			room = GameRoom()	# Create a new room
+			for _ in range(0, PEOPLE_PER_GAME): # For each person
+				token = randomString(TOKEN_LENGTH) # Generate a token for each person
+				tokens[token] = room.room_name # Link the token to the room
+				sid = searching.pop(0)
+				socketio.emit('found', {'token': token}, room=sid) # Tell the client the token
+		await asyncio.sleep(2)
+
 app = Flask(__name__)
 
-players = []
-tokens = {} # token: roomname
-
-room = None
+searching = []
+tokens = {} # token: room_name
+rooms = {}  # room_name: room
 
 @app.route('/')
 def index():
 	return render_template('index.html')
 
-@app.route('/game')
+@app.route('/game', methods=['POST'])
 def game():
-	return render_template('game.html')
+	try:
+		token = request.form['token']
+		room_name = tokens[token]
+		del tokens[token]
+		return render_template('game.html', room=room_name)
+	except KeyError:
+		flask.abort(403)
 
 socketio = SocketIO(app)
 
@@ -258,14 +279,19 @@ def on_ping(data):
 	pass
 
 @socketio.on('search', namespace='/lobby')
-def on_begin_search(data):
-	pass
+def on_search(data):
+	if data['running']:
+		searching.append(request.sid)
+	else:
+		try:
+			searching.remove(request.sid)
+		except ValueError:
+			pass
+	socketio.emit('update', {'people': len(searching)}, namespace='/lobby')
 
 if __name__ == '__main__':
-	room = GameRoom([])
 	webserver = threading.Thread(target=lambda: socketio.run(app, host='0.0.0.0'))
 	webserver.start()
-	room.init()
-	while True:
-		room.update(UPDATE_PERIOD, socketio)
-		time.sleep(UPDATE_PERIOD)
+	loop = asyncio.get_event_loop()
+	asyncio.async(lobby_manager(socketio))
+	loop.run_forever()

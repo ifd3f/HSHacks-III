@@ -21,6 +21,7 @@
 			<h1>Game name here</h1>
 			<p>This is a thing</p>
 			<button id="lobby-btn" type="button" onClick="onButtonClicked()" class="btn btn-default btn-lg">Join Matchmaking</button>
+			<p id="people"></p>
 		</div>
 	</div>
 	<form id="token-form" action="/game" method="POST">
@@ -34,18 +35,28 @@
 		function onButtonClicked() {
 			searching = !searching;
 			if (searching) {
+				console.log('Beginning search')
 				$('#lobby-btn').html('Stop Search');
 				socket.emit('search', {running: true});
 			} else {
+				console.log('Stopping search')
 				$('#lobby-btn').html('Join Matchmaking');
+				$('#people').html('');
 				socket.emit('search', {running: false});
 			}
 		}
 
-		socket.on('found', function(data) { 
-			$('#token-form input').val(data.token);
-			$('#token-form').submit();
+		socket.on('update', function(data) {
+			if (searching) {
+				$('#people').html('Number of people searching: ' + data.people);
+			}
 		});
+
+		socket.on('found', function(data) { 
+			$('#token-form input').val(data.token);  // Put the token into a hidden form
+			$('#token-form').submit();  // Submit the hidden form
+		});
+
 	</script>
 </body>
 </html>
