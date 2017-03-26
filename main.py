@@ -64,8 +64,6 @@ class GameRoom:
 			speed = body.velocity.get_length()
 			if speed > 0:
 				fricDir = -body.velocity.normalized()
-				print(1, body.velocity.normalized())
-				print(2, fricDir)
 				fricAmount = body.mass * FRICTION
 				frictionForce = fricDir * fricAmount * dt
 				if speed < MIN_SPEED:
