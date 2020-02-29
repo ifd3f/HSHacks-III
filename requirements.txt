@@ -1,4 +1,4 @@
-flask==0.12
+flask==1.0
 flask-socketio==2.8.6
 gevent==1.2.1
 gevent-websocket==0.10.1
